@@ -17,6 +17,7 @@ class ModelExtensionPaymentPlisio extends Model
 
         $defaults = array();
 
+        $defaults['payment_plisio_receive_currencies'] = '';
         $defaults['payment_plisio_order_status_id'] = 1;
         $defaults['payment_plisio_pending_status_id'] = 1;
         $defaults['payment_plisio_confirming_status_id'] = 1;

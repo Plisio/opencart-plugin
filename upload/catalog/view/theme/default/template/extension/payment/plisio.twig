@@ -2,11 +2,15 @@
     <div class="buttons">
         <div class="form-group">
             <div class="col-sm-5 col-sm-offset-5">
+                {% if currency != '' %}
+                    <input type="hidden" name="currency" value="{{ currency }}">
+                {% else %}
                 <select name="currency" class="form-control" style="max-width: 400px">
                     {% for currency in currencies %}
                         <option value="{{ currency.cid }}">{{ currency.name }} ({{ currency.currency }})</option>
                     {% endfor %}
                 </select>
+                {% endif %}
             </div>
             <div class="col-sm-2 pull-right">
                 <input type="submit" value="{{ button_confirm }}" class="btn btn-primary"/>

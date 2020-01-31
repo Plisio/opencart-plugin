@@ -3,13 +3,15 @@
 $_['heading_title'] = 'Plisio';
 
 $_['text_extension'] = 'Extensions';
-$_['text_success'] = 'Plision Payment details have been successfully updated.';
+$_['text_success'] = 'Plisio payment details have been successfully updated.';
 $_['text_test_mode_on'] = 'On';
 $_['text_test_mode_off'] = 'Off';
 
 $_['entry_status'] = 'Payment Method Enabled';
 $_['entry_test_mode'] = 'Test Mode';
 $_['entry_api_secret_key'] = 'API Secret Key';
+$_['entry_currency'] = 'Cryptocurrency';
+$_['entry_currency_receive_all'] = 'Any';
 $_['entry_order_status'] = 'Order Status';
 $_['entry_pending_status'] = 'Pending Status';
 $_['entry_confirming_status'] = 'Confirming Status';
