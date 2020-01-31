@@ -23,13 +23,17 @@ class ControllerExtensionPaymentPlisio extends Controller {
     $data['cancel']             = $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment', true);
     $data['order_statuses']     = $this->model_localisation_order_status->getOrderStatuses();
     $data['geo_zones']          = $this->model_localisation_geo_zone->getGeoZones();
-    $data['receive_currencies'] = array('BTC', 'ETH', 'LTC', 'DOGE');
-
+    $data['receive_currencies'] = [];
+    $plisio = new PlisioClient('');
+    $currencies = $plisio->getCurrencies();
+    if (isset($currencies['status']) && $currencies['status'] == 'success') {
+      $data['receive_currencies'] = $currencies['data'];
+    }
     if (isset($this->error['warning'])) {
-			$data['error_warning'] = $this->error['warning'];
-		} else {
-			$data['error_warning'] = '';
-		}
+        $data['error_warning'] = $this->error['warning'];
+    } else {
+        $data['error_warning'] = '';
+    }
 
     $data['breadcrumbs'] = array();
     $data['breadcrumbs'][] = array(
@@ -45,7 +49,7 @@ class ControllerExtensionPaymentPlisio extends Controller {
         'href' => $this->url->link('extension/payment/plisio', 'user_token=' . $this->session->data['user_token'], true)
     );
 
-    $fields = array('payment_plisio_status', 'payment_plisio_api_secret_key',
+    $fields = array('payment_plisio_status', 'payment_plisio_api_secret_key', 'payment_plisio_receive_currencies',
       'payment_plisio_order_status_id', 'payment_plisio_pending_status_id', 'payment_plisio_confirming_status_id', 'payment_plisio_paid_status_id',
       'payment_plisio_invalid_status_id', 'payment_plisio_expired_status_id', 'payment_plisio_canceled_status_id', 'payment_plisio_refunded_status_id',
     );

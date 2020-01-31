@@ -14,9 +14,22 @@ class ControllerExtensionPaymentPlisio extends Controller
         $this->load->model('checkout/order');
         $this->setupPlisioClient();
 
-        $data['button_confirm'] = $this->language->get('button_confirm');
         $currencies = $this->plisio->getCurrencies();
         $data['currencies'] = $currencies['data'];
+        $data['currency'] = $this->model_setting_setting->getSettingValue('payment_plisio_receive_currencies');
+        if (isset($data['currency']) && !empty($data['currency'])){
+            $selectedCurrency = array_filter($currencies['data'], function($i) use ($data){ return $i['cid'] == $data['currency'];});
+            if (!empty($selectedCurrency)){
+                $selectedCurrency = array_values($selectedCurrency);
+            }
+            if (is_array($selectedCurrency) && !empty($selectedCurrency)) {
+                $data['button_confirm'] = sprintf($this->language->get('button_currency_confirm'), $selectedCurrency[0]['name'] . ' (' . $selectedCurrency[0]['currency'] . ')');
+            }
+        }
+        if (!isset($data['button_confirm'])){
+            $data['button_confirm'] =$this->language->get('button_confirm');
+        }
+
         $data['action'] = $this->url->link('extension/payment/plisio/checkout', '', true);
 
         return $this->load->view('extension/payment/plisio', $data);
@@ -36,9 +49,10 @@ class ControllerExtensionPaymentPlisio extends Controller
             $description[] = $product['quantity'] . ' × ' . $product['name'];
         }
 
-        $amount = $order_info['total'] * $this->currency->getvalue('USD');
+        $amount = $order_info['total'] * $this->currency->getvalue($order_info['currency_code']);
         $request = array(
-            'amount_usd' => number_format($amount, 8, '.', ''),
+            'source_amount' => number_format($amount, 8, '.', ''),
+            'source_currency' => $order_info['currency_code'],
             'currency' => $this->request->post['currency'],
             'order_name' => $this->config->get('config_meta_title') . ' Order #' . $order_info['order_id'],
             'order_number' => $order_info['order_id'],
