@@ -23,9 +23,8 @@ class ModelExtensionPaymentPlisio extends Model
         $defaults['payment_plisio_confirming_status_id'] = 1;
         $defaults['payment_plisio_paid_status_id'] = 2;
         $defaults['payment_plisio_invalid_status_id'] = 10;
+        $defaults['payment_plisio_changeback_status_id'] = 13;
         $defaults['payment_plisio_expired_status_id'] = 14;
-        $defaults['payment_plisio_canceled_status_id'] = 7;
-        $defaults['payment_plisio_refunded_status_id'] = 11;
 
         $this->model_setting_setting->editSetting('payment_plisio', $defaults);
     }

@@ -51,7 +51,7 @@ class ControllerExtensionPaymentPlisio extends Controller {
 
     $fields = array('payment_plisio_status', 'payment_plisio_api_secret_key', 'payment_plisio_receive_currencies',
       'payment_plisio_order_status_id', 'payment_plisio_pending_status_id', 'payment_plisio_confirming_status_id', 'payment_plisio_paid_status_id',
-      'payment_plisio_invalid_status_id', 'payment_plisio_expired_status_id', 'payment_plisio_canceled_status_id', 'payment_plisio_refunded_status_id',
+      'payment_plisio_invalid_status_id', 'payment_plisio_expired_status_id', 'payment_plisio_changeback_status_id',
     );
 
 

@@ -70,7 +70,7 @@ class ControllerExtensionPaymentPlisio extends Controller
             ));
 
             $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('payment_plisio_order_status_id'));
-
+            $this->cart->clear();
             $this->response->redirect($response['data']['invoice_url']);
         } else {
             $this->log->write("Order #" . $order_info['order_id'] . " is not valid. " . (isset($response['data']) && isset($response['data']['message'])) ? $response['data']['message'] : '');
@@ -121,17 +121,18 @@ class ControllerExtensionPaymentPlisio extends Controller
                     case 'confirming':
                         $cg_order_status = 'payment_plisio_confirming_status_id';
                         break;
-                    case 'mismatch':
+                    case 'error':
                         $cg_order_status = 'payment_plisio_invalid_status_id';
                         break;
                     case 'expired':
-                        $cg_order_status = 'payment_plisio_expired_status_id';
+                        if ($this->request->post['source_amount'] > 0){
+                            $cg_order_status = 'payment_plisio_invalid_status_id';
+                        } else {
+                            $cg_order_status = 'payment_plisio_expired_status_id';
+                        }
                         break;
-                    case 'canceled':
-                        $cg_order_status = 'payment_plisio_canceled_status_id';
-                        break;
-                    case 'refunded':
-                        $cg_order_status = 'payment_plisio_refunded_status_id';
+                    case 'mismatch':
+                        $cg_order_status = 'payment_plisio_changeback_status_id';
                         break;
                     default:
                         $cg_order_status = NULL;
