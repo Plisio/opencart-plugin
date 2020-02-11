@@ -128,6 +128,21 @@
           </div>
 
           <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-changeback-status">{{ entry_changeback_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_plisio_changeback_status_id" id="input-changeback-status" class="form-control">
+                {% for order_status in order_statuses %}
+                  {% if order_status.order_status_id == payment_plisio_changeback_status_id %}
+                    <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+                  {% else %}
+                    <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
             <label class="col-sm-2 control-label" for="input-invalid-status">{{ entry_invalid_status }}</label>
             <div class="col-sm-10">
               <select name="payment_plisio_invalid_status_id" id="input-invalid-status" class="form-control">
@@ -157,35 +172,6 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="col-sm-2 control-label" for="input-canceled-status">{{ entry_canceled_status }}</label>
-            <div class="col-sm-10">
-              <select name="payment_plisio_canceled_status_id" id="input-canceled-status" class="form-control">
-                {% for order_status in order_statuses %}
-                {% if order_status.order_status_id == payment_plisio_canceled_status_id %}
-                <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
-                {% else %}
-                <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
-                {% endif %}
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="col-sm-2 control-label" for="input-refunded-status">{{ entry_refunded_status }}</label>
-            <div class="col-sm-10">
-              <select name="payment_plisio_refunded_status_id" id="input-refunded-status" class="form-control">
-                {% for order_status in order_statuses %}
-                {% if order_status.order_status_id == payment_plisio_refunded_status_id %}
-                <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
-                {% else %}
-                <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
-                {% endif %}
-                {% endfor %}
-              </select>
-            </div>
-          </div>
         </form>
       </div>
     </div>
