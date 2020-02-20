@@ -51,11 +51,27 @@
             </div>
           </div>
 
+
+          <div class="form-group hidden">
+            <label class="col-sm-2 control-label" for="input-order-status">{{ entry_white_label }}</label>
+            <div class="col-sm-10">
+              <select name="payment_plisio_white_label" id="input-white-label" class="form-control">
+              {% for white_label_key, white_label_value in white_label_options %}
+                {% if white_label_key == payment_plisio_white_label %}
+                  <option value="{{ white_label_key }}" selected="selected">{{ white_label_value }}</option>
+                {% else %}
+                  <option value="{{ white_label_key }}">{{ white_label_value }}</option>
+                {% endif %}
+              {% endfor %}
+              </select>
+            </div>
+          </div>
+
           <div class="form-group">
             <label class="col-sm-2 control-label" for="input-order-status">{{ entry_currency }}</label>
             <div class="col-sm-10">
               <select name="payment_plisio_receive_currencies" id="input-recieve-currenies" class="form-control">
-                <option value="" selected="selected">{{ entry_currency_receive_all }}</option>
+                <option value="">{{ entry_currency_receive_all }}</option>
                 {% for currency in receive_currencies %}
                   {% if currency.cid == payment_plisio_receive_currencies %}
                     <option value="{{ currency.cid }}" selected="selected">{{ currency.name }}</option>
@@ -143,6 +159,21 @@
           </div>
 
           <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-expired-status">{{ entry_expired_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_plisio_expired_status_id" id="input-expired-status" class="form-control">
+                {% for order_status in order_statuses %}
+                  {% if order_status.order_status_id == payment_plisio_expired_status_id %}
+                    <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+                  {% else %}
+                    <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
             <label class="col-sm-2 control-label" for="input-invalid-status">{{ entry_invalid_status }}</label>
             <div class="col-sm-10">
               <select name="payment_plisio_invalid_status_id" id="input-invalid-status" class="form-control">
@@ -158,15 +189,15 @@
           </div>
 
           <div class="form-group">
-            <label class="col-sm-2 control-label" for="input-expired-status">{{ entry_expired_status }}</label>
+            <label class="col-sm-2 control-label" for="input-canceled-status">{{ entry_canceled_status }}</label>
             <div class="col-sm-10">
-              <select name="payment_plisio_expired_status_id" id="input-expired-status" class="form-control">
+              <select name="payment_plisio_canceled_status_id" id="input-canceled-status" class="form-control">
                 {% for order_status in order_statuses %}
-                {% if order_status.order_status_id == payment_plisio_expired_status_id %}
-                <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
-                {% else %}
-                <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
-                {% endif %}
+                  {% if order_status.order_status_id == payment_plisio_canceled_status_id %}
+                    <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+                  {% else %}
+                    <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                  {% endif %}
                 {% endfor %}
               </select>
             </div>
