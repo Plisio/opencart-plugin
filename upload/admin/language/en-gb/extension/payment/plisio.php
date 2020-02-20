@@ -10,6 +10,7 @@ $_['text_test_mode_off'] = 'Off';
 $_['entry_status'] = 'Payment Method Enabled';
 $_['entry_test_mode'] = 'Test Mode';
 $_['entry_api_secret_key'] = 'API Secret Key';
+$_['entry_white_label'] = 'White label processing';
 $_['entry_currency'] = 'Cryptocurrency';
 $_['entry_currency_receive_all'] = 'Any';
 $_['entry_order_status'] = 'Order Status';
@@ -17,7 +18,7 @@ $_['entry_pending_status'] = 'Pending Status';
 $_['entry_confirming_status'] = 'Confirming Status';
 $_['entry_paid_status'] = 'Paid Status';
 $_['entry_invalid_status'] = 'Invalid Status';
-$_['entry_expired_status'] = 'Expired Status';
+$_['entry_expired_status'] = 'Partially paid';
 $_['entry_canceled_status'] = 'Canceled Status';
 $_['entry_changeback_status'] = 'Overpayed';
 
