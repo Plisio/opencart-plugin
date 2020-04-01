@@ -2,6 +2,7 @@
 
 require_once(DIR_SYSTEM . 'library/plisio/PlisioClient.php');
 require_once(DIR_SYSTEM . 'library/plisio/version.php');
+define('PLISIO_OPENCART_VERSION', '1.0.3');
 
 class ControllerExtensionPaymentPlisio extends Controller
 {
@@ -64,7 +65,9 @@ class ControllerExtensionPaymentPlisio extends Controller
             'callback_url' => $this->url->link('extension/payment/plisio/callback', '', true),
             'success_url' => $this->url->link('extension/payment/plisio/success', '', true),
             'email' => $order_info['email'],
-            'language' => $this->language->get('code')
+            'language' => $this->language->get('code'),
+            'plugin' => 'opencart',
+            'version' => PLISIO_OPENCART_VERSION
         );
 
         $response = $this->plisio->createTransaction($request);
@@ -181,6 +184,9 @@ class ControllerExtensionPaymentPlisio extends Controller
                             break;
                         case 'error':
                             $cg_order_status = 'payment_plisio_invalid_status_id';
+                            break;
+                        case 'cancelled':
+                            $cg_order_status = 'payment_plisio_canceled_status_id';
                             break;
                         case 'expired':
                             if ($this->request->post['source_amount'] > 0) {
