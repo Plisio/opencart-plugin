@@ -1,6 +1,6 @@
 <?php
 
-class ModelExtensionPaymentPlisio extends Model
+class ModelPaymentPlisio extends Model
 {
     public function addOrder($data)
     {
@@ -16,14 +16,13 @@ class ModelExtensionPaymentPlisio extends Model
 
     public function getMethod($address, $total)
     {
-        $this->load->language('extension/payment/plisio');
+        $this->load->language('payment/plisio');
 
 
         $method_data = array(
             'code' => 'plisio',
             'title' => $this->language->get('text_title'),
-            'terms' => '',
-            'sort_order' => $this->config->get('payment_plisio_sort_order')
+            'sort_order' => $this->config->get('plisio_sort_order')
         );
 
         return $method_data;

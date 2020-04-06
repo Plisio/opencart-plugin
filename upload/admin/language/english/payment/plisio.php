@@ -2,7 +2,7 @@
 
 $_['heading_title'] = 'Plisio';
 
-$_['text_extension'] = 'Extensions';
+$_['text_payment'] = 'Payment';
 $_['text_success'] = 'Plisio payment details have been successfully updated.';
 $_['text_test_mode_on'] = 'On';
 $_['text_test_mode_off'] = 'Off';
