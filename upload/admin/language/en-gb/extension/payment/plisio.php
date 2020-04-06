@@ -27,5 +27,6 @@ $_['help_receive_currency'] = 'Currency you want to receive when making withdraw
 
 $_['error_permission'] = 'Warning: You do not have permission to modify Plisio!';
 $_['error_composer'] = 'Unable to load plisio library. Please download a compiled vendor folder or run composer.';
+$_['error_no_currencies'] = 'Please select one or more currencies';
 
 $_['text_plisio'] = '<a href="https://plisio.net/" target="_blank" rel="noopener"><img src="view/image/payment/plisio.png" alt="Plisio" title="Plisio" /></a>';

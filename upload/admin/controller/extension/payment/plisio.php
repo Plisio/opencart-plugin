@@ -113,6 +113,10 @@ class ControllerExtensionPaymentPlisio extends Controller {
       $this->error['warning'] = $this->language->get('error_composer');
     }
 
+      if (!isset($this->request->post['payment_plisio_receive_currencies']) || empty($this->request->post['payment_plisio_receive_currencies'])) {
+          $this->error['warning'] = $this->language->get('error_no_currencies');
+      }
+
     if (!$this->error) {
         $plisio = new PlisioClient($this->request->post['payment_plisio_api_secret_key']);
         $testConnection = $plisio->getCurrencies();
