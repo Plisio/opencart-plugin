@@ -1,5 +1,17 @@
 {{ header }}{{ column_left }}
 <div id="content">
+  <style>
+    #simpleList .list-group-item {
+      display: flex;
+      align-items: center;
+    }
+    #simpleList input {
+      margin: 0 .5em 0 0;
+    }
+    #simpleList label {
+      margin: 0;
+    }
+  </style>
   <div class="page-header">
     <div class="container-fluid">
       <div class="pull-right">
@@ -70,16 +82,34 @@
           <div class="form-group">
             <label class="col-sm-2 control-label" for="input-order-status">{{ entry_currency }}</label>
             <div class="col-sm-10">
-              <select name="payment_plisio_receive_currencies" id="input-recieve-currenies" class="form-control">
-                <option value="">{{ entry_currency_receive_all }}</option>
-                {% for currency in receive_currencies %}
-                  {% if currency.cid == payment_plisio_receive_currencies %}
-                    <option value="{{ currency.cid }}" selected="selected">{{ currency.name }}</option>
-                  {% else %}
-                    <option value="{{ currency.cid }}">{{ currency.name }} ({{ currency.currency }})</option>
-                  {% endif %}
-                {% endfor %}
-              </select>
+              <ul class="list-group">
+                <li class="list-group-item" style="border: none;">
+                  <input type="checkbox" value="" id="entry_currency_0" checked="checked" />
+                  <label for="entry_currency_0">{{ entry_currency_receive_all }}</label>
+                </li>
+              </ul>
+              <ul id="simpleList" class="list-group">
+                {% if (payment_plisio_receive_currencies is empty) or (payment_plisio_receive_currencies|length == receive_currencies|length) %}
+                  {% for currency in receive_currencies %}
+                    <li class="list-group-item">
+                      <input type="checkbox" name="payment_plisio_receive_currencies[]" value="{{ currency.cid }}" id="entry_currency_{{ loop.index }}" checked="checked" />
+                      <label for="entry_currency_{{ loop.index }}">{{ currency.name }} ({{ currency.currency }})</label>
+                    </li>
+                  {% endfor %}
+
+                {% else %}
+                  {% for currency in receive_currencies %}
+                    <li class="list-group-item">
+                      {% if currency.cid in payment_plisio_receive_currencies %}
+                        <input type="checkbox" name="payment_plisio_receive_currencies[]" value="{{ currency.cid }}" id="entry_currency_{{ loop.index }}" checked="checked" />
+                      {% else %}
+                        <input type="checkbox" name="payment_plisio_receive_currencies[]" value="{{ currency.cid }}" id="entry_currency_{{ loop.index }}" />
+                      {% endif %}
+                      <label for="entry_currency_{{ loop.index }}">{{ currency.name }} ({{ currency.currency }})</label>
+                    </li>
+                  {% endfor %}
+                {% endif %}
+              </ul>
             </div>
           </div>
 
@@ -208,4 +238,32 @@
     </div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    Sortable.create(simpleList, { /* options */ });
+
+    var checkAny = document.getElementById('entry_currency_0');
+    var checkSome = document.querySelectorAll('[name="payment_plisio_receive_currencies[]"]');
+
+    checkAny.addEventListener('click', function(event) {
+      for (var i = 0; i < checkSome.length; i++) {
+        checkSome[i].checked = event.target.checked;
+      }
+    });
+
+    checkSome.forEach(function(element) {
+      element.addEventListener('click', function() {
+        var values = 0;
+        for (var i = 0; i < checkSome.length; i++) {
+          if (checkSome[i].checked) {
+            values++;
+          }
+        }
+        checkAny.checked = (values === checkSome.length);
+      });
+    });
+
+  });
+</script>
 {{ footer }}
