@@ -5,6 +5,9 @@ require_once(DIR_SYSTEM . 'library/plisio/PlisioClient.php');
 class ControllerExtensionPaymentPlisio extends Controller {
   private $error = array();
 
+  protected $receive_currencies = array();
+  protected $payment_plisio_receive_currencies = array();
+
   public function index() {
     $this->load->language('extension/payment/plisio');
     $this->document->setTitle($this->language->get('heading_title'));
@@ -67,12 +70,32 @@ class ControllerExtensionPaymentPlisio extends Controller {
   		}
     }
 
-//    $data['payment_plisio_sort_order'] = isset($this->request->post['payment_plisio_sort_order']) ?
-//            $this->request->post['payment_plisio_sort_order'] :  $this->config->get('payment_plisio_sort_order');
-//
-//
-//    if (empty($data['payment_plisio_api_auth_token']) && !empty($data['payment_plisio_api_secret']))
-//        $data['payment_plisio_api_auth_token'] = $data['payment_plisio_api_secret'];
+
+    // Currency sort:
+    foreach($data['receive_currencies'] as $currency) {
+      $this->receive_currencies[] = $currency['cid'];
+    }
+    if (is_string($data['payment_plisio_receive_currencies'])) {
+      $this->payment_plisio_receive_currencies[] = $data['payment_plisio_receive_currencies'];
+    } else {
+      $this->payment_plisio_receive_currencies = $data['payment_plisio_receive_currencies'];
+    }
+
+    usort($data['receive_currencies'], function($a, $b) {
+      $includesA = in_array($a['cid'], $this->payment_plisio_receive_currencies);
+      $includesB = in_array($b['cid'], $this->payment_plisio_receive_currencies);
+
+      if ($includesA && !$includesB) {
+        return -1;
+      } else if (!$includesA && $includesB) {
+        return 1;
+      } else {
+        $a = array_search($a['cid'], $this->receive_currencies);
+        $b = array_search($b['cid'], $this->receive_currencies);
+
+        return $b - $a;
+      }
+    });
 
     $data['header'] = $this->load->controller('common/header');
     $data['column_left'] = $this->load->controller('common/column_left');
