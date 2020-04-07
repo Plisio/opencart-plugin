@@ -8,6 +8,7 @@ class ControllerExtensionPaymentPlisio extends Controller
 {
     /** @var PlisioClient */
     private $plisio;
+    private $plisio_receive_currencies = array();
 
     public function index()
     {
@@ -30,6 +31,22 @@ class ControllerExtensionPaymentPlisio extends Controller
             if (!empty($data['currencies'])) {
                 $data['currencies'] = array_values($data['currencies']);
             }
+
+
+            $this->plisio_receive_currencies = $selectedCurrencies;
+            usort($data['currencies'], function($a, $b) {
+                $idxA = array_search($a['cid'], $this->plisio_receive_currencies);
+                $idxB = array_search($b['cid'], $this->plisio_receive_currencies);
+
+                $idxA = $idxA === false ? -1 : $idxA;
+                $idxB = $idxB === false ? -1 : $idxB;
+
+                if ($idxA < 0 && $idxB < 0) return -1;
+                if ($idxA < 0 && $idxB >= 0) return 1;
+                if ($idxA >= 0 && $idxB < 0) return -1;
+                return $idxA - $idxB;
+            });
+
 
             if (is_array($data['currencies']) && count($data['currencies']) == 1) {
                 $buttonCaption = sprintf($this->language->get('button_currency_confirm'), $data['currencies'][0]['name'] . ' (' . $data['currencies'][0]['currency'] . ')');
