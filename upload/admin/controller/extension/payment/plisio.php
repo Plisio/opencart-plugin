@@ -5,6 +5,9 @@ require_once(DIR_SYSTEM . 'library/plisio/PlisioClient.php');
 class ControllerExtensionPaymentPlisio extends Controller {
   private $error = array();
 
+  protected $receive_currencies = array();
+  protected $payment_plisio_receive_currencies = array();
+
   public function index() {
     $this->load->language('extension/payment/plisio');
     $this->document->setTitle($this->language->get('heading_title'));
@@ -67,12 +70,33 @@ class ControllerExtensionPaymentPlisio extends Controller {
   		}
     }
 
-//    $data['payment_plisio_sort_order'] = isset($this->request->post['payment_plisio_sort_order']) ?
-//            $this->request->post['payment_plisio_sort_order'] :  $this->config->get('payment_plisio_sort_order');
-//
-//
-//    if (empty($data['payment_plisio_api_auth_token']) && !empty($data['payment_plisio_api_secret']))
-//        $data['payment_plisio_api_auth_token'] = $data['payment_plisio_api_secret'];
+
+    // Currency sort:
+    $this->receive_currencies = array_map(function($item) {
+      return $item['cid'];
+    }, $data['receive_currencies']);
+
+    // get active currencies CIDs:
+    if (is_string($data['payment_plisio_receive_currencies'])) {
+      $this->payment_plisio_receive_currencies[] = $data['payment_plisio_receive_currencies'];
+    } else {
+      $this->payment_plisio_receive_currencies = $data['payment_plisio_receive_currencies'];
+    }
+
+    // sort:
+    usort($data['receive_currencies'], function($a, $b) {
+      $idxA = array_search($a['cid'], $this->payment_plisio_receive_currencies);
+      $idxB = array_search($b['cid'], $this->payment_plisio_receive_currencies);
+
+      $idxA = $idxA === false ? -1 : $idxA;
+      $idxB = $idxB === false ? -1 : $idxB;
+
+      if ($idxA < 0 && $idxB < 0) return -1;
+      if ($idxA < 0 && $idxB >= 0) return 1;
+      if ($idxA >= 0 && $idxB < 0) return -1;
+      return $idxA - $idxB;
+    });
+
 
     $data['header'] = $this->load->controller('common/header');
     $data['column_left'] = $this->load->controller('common/column_left');
@@ -89,6 +113,10 @@ class ControllerExtensionPaymentPlisio extends Controller {
     if (!class_exists('PlisioClient')) {
       $this->error['warning'] = $this->language->get('error_composer');
     }
+
+      if (!isset($this->request->post['payment_plisio_receive_currencies']) || empty($this->request->post['payment_plisio_receive_currencies'])) {
+          $this->error['warning'] = $this->language->get('error_no_currencies');
+      }
 
     if (!$this->error) {
         $plisio = new PlisioClient($this->request->post['payment_plisio_api_secret_key']);
