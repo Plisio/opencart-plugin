@@ -1,8 +1,8 @@
 <form action="{{ action }}" method="post">
     <div class="form-group">
         <div class="col-sm-5 col-sm-offset-5">
-            {% if currency != '' %}
-                <input type="hidden" name="currency" value="{{ currency }}">
+            {% if (currencies is iterable) and (currencies|length == 1) %}
+                <input type="hidden" name="currency" value="{{ currencies[0]['cid'] }}" class="string">
             {% else %}
                 <select name="currency" class="form-control" style="max-width: 400px">
                     {% for currency in currencies %}
@@ -19,9 +19,9 @@
     </div>
 </form>
 <script>
-    if (!$('.quick-checkout-payment .buttons').is(':visible')){
+    if (!$('.quick-checkout-payment .buttons').is(':visible')) {
         var inp = $('.quick-checkout-payment *[name=currency]').parent();
         inp.removeClass('col-sm-5').addClass('col-sm-12');
-        inp.prepend($('<label />').attr('for', 'currency').text('Pay with: '));
+        inp.prepend($('<label />').attr('for', 'currency').text('{{ pay_with_text }}'));
     }
 </script>

@@ -2,7 +2,7 @@
 
 require_once(DIR_SYSTEM . 'library/plisio/PlisioClient.php');
 require_once(DIR_SYSTEM . 'library/plisio/version.php');
-define('PLISIO_OPENCART_VERSION', '1.0.3');
+
 
 class ControllerExtensionPaymentPlisio extends Controller
 {
@@ -17,16 +17,24 @@ class ControllerExtensionPaymentPlisio extends Controller
 
         $currencies = $this->plisio->getCurrencies();
         $data['currencies'] = $currencies['data'];
-        $data['currency'] = $this->model_setting_setting->getSettingValue('payment_plisio_receive_currencies');
-        if (isset($data['currency']) && !empty($data['currency'])) {
-            $selectedCurrency = array_filter($currencies['data'], function ($i) use ($data) {
-                return $i['cid'] == $data['currency'];
+        $selectedCurrencies = $this->model_setting_setting->getSettingValue('payment_plisio_receive_currencies');
+        $selectedCurrencies = str_replace(['"', '[', ']'], '', $selectedCurrencies);
+        $selectedCurrencies = explode(',', $selectedCurrencies);
+        if (!is_array($selectedCurrencies)) $selectedCurrencies = [$selectedCurrencies];
+
+        if (count($selectedCurrencies) > 0) {
+            $data['currencies'] = array_filter($currencies['data'], function ($i) use ($selectedCurrencies) {
+                return in_array($i['cid'], $selectedCurrencies);
             });
-            if (!empty($selectedCurrency)) {
-                $selectedCurrency = array_values($selectedCurrency);
+
+            if (!empty($data['currencies'])) {
+                $data['currencies'] = array_values($data['currencies']);
             }
-            if (is_array($selectedCurrency) && !empty($selectedCurrency)) {
-                $data['button_confirm'] = sprintf($this->language->get('button_currency_confirm'), $selectedCurrency[0]['name'] . ' (' . $selectedCurrency[0]['currency'] . ')');
+
+            if (is_array($data['currencies']) && count($data['currencies']) == 1) {
+                $buttonCaption = sprintf($this->language->get('button_currency_confirm'), $data['currencies'][0]['name'] . ' (' . $data['currencies'][0]['currency'] . ')');
+                $data['pay_with_text'] = $buttonCaption;
+                $data['button_confirm'] = $buttonCaption;
             }
         }
         if (!isset($data['button_confirm'])) {
@@ -67,7 +75,7 @@ class ControllerExtensionPaymentPlisio extends Controller
             'email' => $order_info['email'],
             'language' => $this->language->get('code'),
             'plugin' => 'opencart',
-            'version' => PLISIO_OPENCART_VERSION
+            'version' => PLISIO_OPENCART_EXTENSION_VERSION
         );
 
         $response = $this->plisio->createTransaction($request);

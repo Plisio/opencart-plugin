@@ -12,7 +12,7 @@ $_['entry_test_mode'] = 'Test Mode';
 $_['entry_api_secret_key'] = 'API Secret Key';
 $_['entry_white_label'] = 'White label processing';
 $_['entry_currency'] = 'Cryptocurrency';
-$_['entry_currency_receive_all'] = 'Any';
+$_['entry_currency_receive_all'] = 'Check/uncheck all';
 $_['entry_order_status'] = 'Order Status';
 $_['entry_pending_status'] = 'Pending Status';
 $_['entry_confirming_status'] = 'Confirming Status';
@@ -27,5 +27,6 @@ $_['help_receive_currency'] = 'Currency you want to receive when making withdraw
 
 $_['error_permission'] = 'Warning: You do not have permission to modify Plisio!';
 $_['error_composer'] = 'Unable to load plisio library. Please download a compiled vendor folder or run composer.';
+$_['error_no_currencies'] = 'Please select one or more currencies';
 
 $_['text_plisio'] = '<a href="https://plisio.net/" target="_blank" rel="noopener"><img src="view/image/payment/plisio.png" alt="Plisio" title="Plisio" /></a>';
