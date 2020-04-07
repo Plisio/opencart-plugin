@@ -7,6 +7,7 @@ class ControllerPaymentPlisio extends Controller
 {
     /** @var PlisioClient */
     private $plisio;
+    private $plisio_receive_currencies = array();
 
     public function index()
     {
@@ -17,23 +18,42 @@ class ControllerPaymentPlisio extends Controller
         $currencies = $this->plisio->getCurrencies();
         $this->data['currencies'] = $currencies['data'];
         $this->data['currency'] = $this->config->get('plisio_receive_currencies');
-        if (isset($this->data['currency']) && !empty($this->data['currency'])) {
+
+
+        if (!is_array($this->data['currency'])) $this->data['currency'] = [$this->data['currency']];
+
+        if (count($this->data['currency']) > 0) {
             $selectedCurrency = array_filter($currencies['data'], function ($i) {
-                return $i['cid'] == $this->data['currency'];
+                return in_array($i['cid'], $this->data['currency']);
             });
             if (!empty($selectedCurrency)) {
                 $selectedCurrency = array_values($selectedCurrency);
             }
-            if (is_array($selectedCurrency) && !empty($selectedCurrency)) {
+
+            $this->plisio_receive_currencies = $this->data['currency'];
+            usort($selectedCurrency, function($a, $b) {
+                $idxA = array_search($a['cid'], $this->plisio_receive_currencies);
+                $idxB = array_search($b['cid'], $this->plisio_receive_currencies);
+
+                $idxA = $idxA === false ? -1 : $idxA;
+                $idxB = $idxB === false ? -1 : $idxB;
+
+                if ($idxA < 0 && $idxB < 0) return -1;
+                if ($idxA < 0 && $idxB >= 0) return 1;
+                if ($idxA >= 0 && $idxB < 0) return -1;
+                return $idxA - $idxB;
+            });
+
+            if (count($selectedCurrency) === 1) {
                 $this->data['button_confirm'] = sprintf($this->language->get('button_currency_confirm'), $selectedCurrency[0]['name'] . ' (' . $selectedCurrency[0]['currency'] . ')');
             }
+            $this->data['currencies'] = $selectedCurrency;
         }
         if (!isset($this->data['button_confirm'])) {
             $this->data['button_confirm'] = $this->language->get('button_confirm');
         }
 
         $this->data['action'] = $this->url->link('payment/plisio/checkout', '', 'SSL');
-        $this->data['button_confirm'] = $this->language->get('button_confirm');
 
         $this->template = 'default/template/payment/plisio.tpl';
 

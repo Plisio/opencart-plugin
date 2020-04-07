@@ -1,5 +1,30 @@
 <?php echo $header; ?>
 <div id="content">
+    <style>
+        .plisio-list-currencies .list-group{
+          padding: 0;
+          margin-bottom: .5rem;
+        }
+        .plisio-list-currencies .list-group-item {
+          list-style: none;
+          padding: 0.5em 1em;
+          border: 1px dotted #ccc;
+        }
+        .plisio-list-currencies .list-group-item + .list-group-item{
+          border-top: none;
+        }
+        .plisio-list-currencies .list-group-item.--check-all {
+            border: none;
+        }
+        .plisio-list-currencies input {
+            position: relative;
+            top: 0.2em;
+            margin: 0 .5em 0 0;
+        }
+        .plisio-list-currencies label {
+            margin: 0;
+        }
+    </style>
     <div class="breadcrumb">
         <?php foreach ($breadcrumbs as $breadcrumb) { ?>
         <?php echo $breadcrumb['separator']; ?><a
@@ -62,6 +87,53 @@
 */ ?>
 
 
+                    <tr class="plisio-list-currencies">
+                        <td><?= $entry_currency; ?> <br> <i><?= $entry_currency_hint ?></i></td>
+                        <td>
+                            <ul class="list-group">
+                                <?php if ((empty($plisio_receive_currencies) && $error_warning == '') || count($plisio_receive_currencies) === count($receive_currencies)): ?>
+                                    <li class="list-group-item --check-all">
+                                        <input type="checkbox" value="" id="entry_currency_0" checked="checked" />
+                                        <label for="entry_currency_0"><?= $entry_currency_receive_all ?></label>
+                                    </li>
+                                    <?php else: ?>
+                                    <li class="list-group-item --check-all">
+                                        <input type="checkbox" value="" id="entry_currency_0" />
+                                        <label for="entry_currency_0"><?= $entry_currency_receive_all ?></label>
+                                    </li>
+                                <?php endif; ?>
+                            </ul>
+
+                            <ul id="simpleList" class="list-group">
+                              <?php if((empty($plisio_receive_currencies) && $error_warning == '') || count($plisio_receive_currencies) === count($receive_currencies)): ?>
+                                <?php $i = 1; ?>
+                                <?php foreach($receive_currencies as $currency): ?>
+                                  <li class="list-group-item">
+                                    <input type="checkbox" name="plisio_receive_currencies[]" value="<?= $currency['cid'] ?>" id="entry_currency_<?= $i ?>" checked="checked" />
+                                    <label for="entry_currency_<?= $i ?>"><?= $currency['name'] ?> (<?= $currency['currency'] ?>)</label>
+                                  </li>
+                                  <?php $i++; ?>
+                                <?php endforeach; ?>
+
+                              <?php else: ?>
+                                <?php $i = 1; ?>
+                                <?php foreach($receive_currencies as $currency): ?>
+                                  <li class="list-group-item">
+                                    <?php if(is_array($plisio_receive_currencies) && in_array($currency['cid'], $plisio_receive_currencies)): ?>
+                                      <input type="checkbox" name="plisio_receive_currencies[]" value="<?= $currency['cid'] ?>" id="entry_currency_<?= $i ?>" checked="checked" />
+                                    <?php else: ?>
+                                      <input type="checkbox" name="plisio_receive_currencies[]" value="<?= $currency['cid'] ?>" id="entry_currency_<?= $i ?>" />
+                                    <?php endif; ?>
+                                    <label for="entry_currency_<?= $i ?>"><?= $currency['name'] ?> (<?= $currency['currency'] ?>)</label>
+                                  </li>
+                                  <?php $i++; ?>
+                                <?php endforeach; ?>
+                              <?php endif; ?>
+                            </ul>
+                        </td>
+                    </tr>
+
+                    <?php /* ?>
                     <tr>
                         <td><?php echo $entry_currency; ?></td>
                         <td>
@@ -81,6 +153,7 @@
                             </select>
                         </td>
                     </tr>
+                    <?php */ ?>
 
                     <tr>
                         <td><?php echo $entry_order_status; ?></td>
@@ -220,4 +293,32 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    Sortable.create(simpleList, { /* options */ });
+
+    var checkAny = document.getElementById('entry_currency_0');
+    var checkSome = document.querySelectorAll('[name="plisio_receive_currencies[]"]');
+
+    checkAny.addEventListener('click', function(event) {
+      for (var i = 0; i < checkSome.length; i++) {
+        checkSome[i].checked = event.target.checked;
+      }
+    });
+
+    checkSome.forEach(function(element) {
+      element.addEventListener('click', function() {
+        var values = 0;
+        for (var i = 0; i < checkSome.length; i++) {
+          if (checkSome[i].checked) {
+            values++;
+          }
+        }
+        checkAny.checked = (values === checkSome.length);
+      });
+    });
+
+  });
+</script>
 <?php echo $footer; ?>

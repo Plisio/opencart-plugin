@@ -12,6 +12,7 @@ $_['entry_test_mode'] = 'Test Mode';
 $_['entry_api_secret_key'] = 'API Secret Key';
 $_['entry_white_label'] = 'White label processing';
 $_['entry_currency'] = 'Cryptocurrency';
+$_['entry_currency_hint'] = '(Drag & drop list items to sort currencies)';
 $_['entry_currency_receive_all'] = 'Any';
 $_['entry_order_status'] = 'Order Status';
 $_['entry_pending_status'] = 'Pending Status';

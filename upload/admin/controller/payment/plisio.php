@@ -6,6 +6,9 @@ class ControllerPaymentPlisio extends Controller
 {
     private $error = array();
 
+    protected $receive_currencies = array();
+    protected $plisio_receive_currencies = array();
+
     public function index()
     {
         $this->load->language('payment/plisio');
@@ -27,6 +30,7 @@ class ControllerPaymentPlisio extends Controller
         $this->data['entry_status'] = $this->language->get('entry_status');
         $this->data['entry_api_secret_key'] = $this->language->get('entry_api_secret_key');
         $this->data['entry_currency'] = $this->language->get('entry_currency');
+        $this->data['entry_currency_hint'] = $this->language->get('entry_currency_hint');
         $this->data['entry_order_status'] = $this->language->get('entry_order_status');
         $this->data['entry_pending_status'] = $this->language->get('entry_pending_status');
         $this->data['entry_confirming_status'] = $this->language->get('entry_confirming_status');
@@ -108,7 +112,32 @@ class ControllerPaymentPlisio extends Controller
             }
         }
 
+        // Currency sort:
+        $this->receive_currencies = array_map(function($item) {
+            return $item['cid'];
+        }, $this->data['receive_currencies']);
 
+        // get active currencies CIDs:
+        if (!is_array($this->data['plisio_receive_currencies'])) {
+            $this->plisio_receive_currencies[] = $this->data['plisio_receive_currencies'];
+        } else {
+            $this->plisio_receive_currencies = $this->data['plisio_receive_currencies'];
+        }
+        $this->data['plisio_receive_currencies'] = $this->plisio_receive_currencies;
+
+        // sort:
+        usort($this->data['receive_currencies'], function($a, $b) {
+            $idxA = array_search($a['cid'], $this->plisio_receive_currencies);
+            $idxB = array_search($b['cid'], $this->plisio_receive_currencies);
+
+            $idxA = $idxA === false ? -1 : $idxA;
+            $idxB = $idxB === false ? -1 : $idxB;
+
+            if ($idxA < 0 && $idxB < 0) return -1;
+            if ($idxA < 0 && $idxB >= 0) return 1;
+            if ($idxA >= 0 && $idxB < 0) return -1;
+            return $idxA - $idxB;
+        });
 
         $this->template = 'payment/plisio.tpl';
         $this->children = array(
