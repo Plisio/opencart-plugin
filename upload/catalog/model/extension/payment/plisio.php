@@ -23,7 +23,7 @@ class ModelExtensionPaymentPlisio extends Model
             'code' => 'plisio',
             'title' => $this->language->get('text_title'),
             'terms' => '',
-            'sort_order' => $this->config->get('payment_plisio_sort_order')
+            'sort_order' => $this->config->get('plisio_sort_order')
         );
 
         return $method_data;
