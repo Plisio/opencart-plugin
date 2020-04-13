@@ -30,3 +30,7 @@ $_['error_composer'] = 'Unable to load plisio library. Please download a compile
 $_['error_no_currencies'] = 'Please select one or more currencies';
 
 $_['text_plisio'] = '<a href="https://plisio.net/" target="_blank" rel="noopener"><img src="view/image/payment/plisio.png" alt="Plisio" title="Plisio" /></a>';
+
+// Tab
+$_['tab_settings']				         = 'Settings';
+$_['tab_order_status']			         = 'Order Status';

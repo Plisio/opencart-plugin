@@ -18,9 +18,9 @@ class ControllerExtensionPaymentPlisio extends Controller
 
         $currencies = $this->plisio->getCurrencies();
         $data['currencies'] = $currencies['data'];
-        $selectedCurrencies = $this->model_setting_setting->getSettingValue('payment_plisio_receive_currencies');
-        $selectedCurrencies = str_replace(['"', '[', ']'], '', $selectedCurrencies);
-        $selectedCurrencies = explode(',', $selectedCurrencies);
+        $selectedCurrencies =  $this->config->get('plisio_receive_currencies');
+//        $selectedCurrencies = str_replace(['"', '[', ']'], '', $selectedCurrencies);
+//        $selectedCurrencies = explode(',', $selectedCurrencies);
         if (!is_array($selectedCurrencies)) $selectedCurrencies = [$selectedCurrencies];
 
         if (count($selectedCurrencies) > 0) {
@@ -102,9 +102,9 @@ class ControllerExtensionPaymentPlisio extends Controller
                 'plisio_invoice_id' => $response['data']['txn_id']
             ));
 
-            $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('payment_plisio_order_status_id'));
+            $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('plisio_order_status_id'));
             $this->cart->clear();
-            if ($this->model_setting_setting->getSettingValue('payment_plisio_white_label') == 'false') {
+            if ( $this->config->get('plisio_white_label') == 'false') {
                 $this->response->redirect($response['data']['invoice_url']);
             } else {
                 $this->response->redirect($this->url->link('extension/payment/plisio/invoice', '', true));
@@ -127,7 +127,7 @@ class ControllerExtensionPaymentPlisio extends Controller
         $plisioParsedUrl = parse_url($this->plisio->apiEndPoint);
         $plisioInvoiceUrl = $plisioParsedUrl['scheme'] . '://' . $plisioParsedUrl['host'] . '/invoice/' . $invoiceId;
 
-        if ($this->model_setting_setting->getSettingValue('payment_plisio_white_label') == 'false'){
+        if ( $this->config->get('plisio_white_label') == 'false'){
             $this->response->redirect($plisioInvoiceUrl);
         }
 
@@ -177,7 +177,7 @@ class ControllerExtensionPaymentPlisio extends Controller
         unset($post['verify_hash']);
         ksort($post);
         $postString = serialize($post);
-        $checkKey = hash_hmac('sha1', $postString, $this->model_setting_setting->getSettingValue('payment_plisio_api_secret_key'));
+        $checkKey = hash_hmac('sha1', $postString,  $this->config->get('plisio_api_secret_key'));
         if ($checkKey != $verifyHash) {
             $errorMessage = 'Callback data looks compromised';
             $this->log->write($errorMessage);
@@ -202,26 +202,26 @@ class ControllerExtensionPaymentPlisio extends Controller
                 if ($ext_order) {
                     switch ($this->request->post['status']) {
                         case 'completed':
-                            $cg_order_status = 'payment_plisio_paid_status_id';
+                            $cg_order_status = 'plisio_paid_status_id';
                             break;
                         case 'confirming':
-                            $cg_order_status = 'payment_plisio_confirming_status_id';
+                            $cg_order_status = 'plisio_confirming_status_id';
                             break;
                         case 'error':
-                            $cg_order_status = 'payment_plisio_invalid_status_id';
+                            $cg_order_status = 'plisio_invalid_status_id';
                             break;
                         case 'cancelled':
-                            $cg_order_status = 'payment_plisio_canceled_status_id';
+                            $cg_order_status = 'plisio_canceled_status_id';
                             break;
                         case 'expired':
                             if ($this->request->post['source_amount'] > 0) {
-                                $cg_order_status = 'payment_plisio_invalid_status_id';
+                                $cg_order_status = 'plisio_invalid_status_id';
                             } else {
-                                $cg_order_status = 'payment_plisio_canceled_status_id';
+                                $cg_order_status = 'plisio_canceled_status_id';
                             }
                             break;
                         case 'mismatch':
-                            $cg_order_status = 'payment_plisio_changeback_status_id';
+                            $cg_order_status = 'plisio_changeback_status_id';
                             break;
                         default:
                             $cg_order_status = NULL;
@@ -245,7 +245,7 @@ class ControllerExtensionPaymentPlisio extends Controller
     private function setupPlisioClient()
     {
         $this->load->model('setting/setting');
-        $secretKey = $this->model_setting_setting->getSettingValue('payment_plisio_api_secret_key');
+        $secretKey =  $this->config->get('plisio_api_secret_key');
         $this->plisio = new PlisioClient($secretKey);
     }
 }
