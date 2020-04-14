@@ -48,6 +48,7 @@ class ControllerExtensionPaymentPlisio extends Controller
             });
 
 
+            $data['pay_with_text'] = $this->language->get('pay_with_text');
             if (is_array($data['currencies']) && count($data['currencies']) == 1) {
                 $buttonCaption = sprintf($this->language->get('button_currency_confirm'), $data['currencies'][0]['name'] . ' (' . $data['currencies'][0]['currency'] . ')');
                 $data['pay_with_text'] = $buttonCaption;
