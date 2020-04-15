@@ -1,6 +1,6 @@
 <?php
 
-class ModelExtensionPaymentPlisio extends Model
+class ModelPaymentPlisio extends Model
 {
     public function addOrder($data)
     {
@@ -16,7 +16,7 @@ class ModelExtensionPaymentPlisio extends Model
 
     public function getMethod($address, $total)
     {
-        $this->load->language('extension/payment/plisio');
+        $this->load->language('payment/plisio');
 
 
         $method_data = array(
