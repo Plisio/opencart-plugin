@@ -4,7 +4,7 @@ require_once(DIR_SYSTEM . 'library/plisio/PlisioClient.php');
 require_once(DIR_SYSTEM . 'library/plisio/version.php');
 
 
-class ControllerExtensionPaymentPlisio extends Controller
+class ControllerPaymentPlisio extends Controller
 {
     /** @var PlisioClient */
     private $plisio;
@@ -12,7 +12,7 @@ class ControllerExtensionPaymentPlisio extends Controller
 
     public function index()
     {
-        $this->load->language('extension/payment/plisio');
+        $this->load->language('payment/plisio');
         $this->load->model('checkout/order');
         $this->setupPlisioClient();
 
@@ -59,16 +59,16 @@ class ControllerExtensionPaymentPlisio extends Controller
             $data['button_confirm'] = $this->language->get('button_confirm');
         }
 
-        $data['action'] = $this->url->link('extension/payment/plisio/checkout', '', true);
+        $data['action'] = $this->url->link('payment/plisio/checkout', '', true);
 
-        return $this->load->view('extension/payment/plisio', $data);
+        return $this->load->view('default/template/payment/plisio.tpl', $data);
     }
 
     public function checkout()
     {
         $this->setupPlisioClient();
         $this->load->model('checkout/order');
-        $this->load->model('extension/payment/plisio');
+        $this->load->model('payment/plisio');
 
         $orderId = $this->session->data['order_id'];
         $order_info = $this->model_checkout_order->getOrder($orderId);
@@ -87,9 +87,9 @@ class ControllerExtensionPaymentPlisio extends Controller
             'order_name' => $this->config->get('config_meta_title') . ' Order #' . $order_info['order_id'],
             'order_number' => $order_info['order_id'],
             'description' => join($description, ', '),
-            'cancel_url' => $this->url->link('extension/payment/plisio/callback', '', true),
-            'callback_url' => $this->url->link('extension/payment/plisio/callback', '', true),
-            'success_url' => $this->url->link('extension/payment/plisio/success', '', true),
+            'cancel_url' => $this->url->link('payment/plisio/callback', '', true),
+            'callback_url' => $this->url->link('payment/plisio/callback', '', true),
+            'success_url' => $this->url->link('payment/plisio/success', '', true),
             'email' => $order_info['email'],
             'language' => $this->language->get('code'),
             'plugin' => 'opencart',
@@ -98,7 +98,7 @@ class ControllerExtensionPaymentPlisio extends Controller
 
         $response = $this->plisio->createTransaction($request);
         if ($response && $response['status'] !== 'error' && !empty($response['data'])) {
-            $this->model_extension_payment_plisio->addOrder(array(
+            $this->model_payment_plisio->addOrder(array(
                 'order_id' => $order_info['order_id'],
                 'plisio_invoice_id' => $response['data']['txn_id']
             ));
@@ -108,7 +108,7 @@ class ControllerExtensionPaymentPlisio extends Controller
             if ( $this->config->get('plisio_white_label') == 'false') {
                 $this->response->redirect($response['data']['invoice_url']);
             } else {
-                $this->response->redirect($this->url->link('extension/payment/plisio/invoice', '', true));
+                $this->response->redirect($this->url->link('payment/plisio/invoice', '', true));
             }
         } else {
             $this->log->write("Order #" . $order_info['order_id'] . " is not valid. " . (isset($response['data']) && isset($response['data']['message'])) ? $response['data']['message'] : '');
@@ -118,12 +118,12 @@ class ControllerExtensionPaymentPlisio extends Controller
 
     public function invoice()
     {
-        $this->load->model('extension/payment/plisio');
+        $this->load->model('payment/plisio');
 //        $this->load->model('checkout/order');
         $this->setupPlisioClient();
 
         $orderId = $this->session->data['order_id'];
-        $plisioOrder = $this->model_extension_payment_plisio->getOrder($orderId);
+        $plisioOrder = $this->model_payment_plisio->getOrder($orderId);
         $invoiceId = $plisioOrder['plisio_invoice_id'];
         $plisioParsedUrl = parse_url($this->plisio->apiEndPoint);
         $plisioInvoiceUrl = $plisioParsedUrl['scheme'] . '://' . $plisioParsedUrl['host'] . '/invoice/' . $invoiceId;
@@ -139,7 +139,7 @@ class ControllerExtensionPaymentPlisio extends Controller
 
         $data['footer'] = $this->load->controller('common/footer');
         $data['header'] = $this->load->controller('common/header');
-        $this->response->setOutput($this->load->view('extension/payment/plisio_invoice', $data));
+        $this->response->setOutput($this->load->view('payment/plisio_invoice.tpl', $data));
     }
 
     public function cancel()
@@ -151,9 +151,9 @@ class ControllerExtensionPaymentPlisio extends Controller
     {
         if (isset($this->session->data['order_id'])) {
             $this->load->model('checkout/order');
-            $this->load->model('extension/payment/plisio');
+            $this->load->model('payment/plisio');
 
-            $order = $this->model_extension_payment_plisio->getOrder($this->session->data['order_id']);
+            $order = $this->model_payment_plisio->getOrder($this->session->data['order_id']);
         } else {
             $order = '';
         }
@@ -192,11 +192,11 @@ class ControllerExtensionPaymentPlisio extends Controller
     {
         if ($this->verifyCallbackData()) {
             $this->load->model('checkout/order');
-            $this->load->model('extension/payment/plisio');
+            $this->load->model('payment/plisio');
 
             $order_id = $this->request->post['order_number'];
             $order_info = $this->model_checkout_order->getOrder($order_id);
-            $ext_order = $this->model_extension_payment_plisio->getOrder($order_id);
+            $ext_order = $this->model_payment_plisio->getOrder($order_id);
 
 
             if (!empty($order_info) && !empty($ext_order)) {
