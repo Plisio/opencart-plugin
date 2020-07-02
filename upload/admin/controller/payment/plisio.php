@@ -26,6 +26,7 @@ class ControllerPaymentPlisio extends Controller
         $data['heading_title'] = $this->language->get('heading_title');
         $data['entry_status'] = $this->language->get('entry_status');
         $data['entry_api_secret_key'] = $this->language->get('entry_api_secret_key');
+        $data['entry_sort_order'] = $this->language->get('entry_sort_order');
         $data['entry_currency'] = $this->language->get('entry_currency');
         $data['entry_currency_hint'] = $this->language->get('entry_currency_hint');
         $data['entry_order_status'] = $this->language->get('entry_order_status');
@@ -80,7 +81,8 @@ class ControllerPaymentPlisio extends Controller
 
         $fields = array('plisio_status', 'plisio_api_secret_key', 'plisio_receive_currencies',
             'plisio_order_status_id', 'plisio_pending_status_id', 'plisio_confirming_status_id', 'plisio_paid_status_id',
-            'plisio_invalid_status_id', 'plisio_expired_status_id', 'plisio_changeback_status_id', 'plisio_canceled_status_id', 'plisio_white_label'
+            'plisio_invalid_status_id', 'plisio_expired_status_id', 'plisio_changeback_status_id',
+            'plisio_canceled_status_id', 'plisio_white_label', 'plisio_sort_order'
         );
 
         $data['white_label_options'] = [
