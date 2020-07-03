@@ -167,20 +167,17 @@ class ControllerExtensionPaymentPlisio extends Controller
     private function verifyCallbackData()
     {
         if (!isset($this->request->post['verify_hash'])) {
-            $this->log->write('Callback data has no verify hash');
             return false;
         }
-        $this->load->model('setting/setting');
 
         $post = $this->request->post;
         $verifyHash = $post['verify_hash'];
         unset($post['verify_hash']);
         ksort($post);
         $postString = serialize($post);
+        $this->load->model('setting/setting');
         $checkKey = hash_hmac('sha1', $postString, $this->model_setting_setting->getSettingValue('payment_plisio_api_secret_key'));
         if ($checkKey != $verifyHash) {
-            $errorMessage = 'Callback data looks compromised';
-            $this->log->write($errorMessage);
             return false;
         }
 
