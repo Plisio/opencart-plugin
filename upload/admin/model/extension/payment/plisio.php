@@ -27,6 +27,7 @@ class ModelExtensionPaymentPlisio extends Model
         $defaults['plisio_changeback_status_id'] = 13;
         $defaults['plisio_expired_status_id'] = 14;
         $defaults['plisio_canceled_status_id'] = 7;
+        $defaults['plisio_sort_order'] = 1;
 
         $this->model_setting_setting->editSetting('plisio', $defaults);
     }

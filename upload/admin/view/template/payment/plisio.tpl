@@ -69,6 +69,16 @@
                         </td>
                     </tr>
 
+                    <tr>
+                        <td><?php echo $entry_sort_order; ?></td>
+                        <td>
+                            <input type="text" name="plisio_sort_order"
+                                   value="<?php echo $plisio_sort_order; ?>"
+                                   placeholder="<?php echo $entry_sort_order; ?>" id="input-sort-order"
+                                   class="form-control"/>
+                        </td>
+                    </tr>
+
 <?php /**
                              <div class="form-group hidden">
                                <label class="col-sm-2 control-label" for="input-order-status"><?php echo $entry_white_label; ?></label>

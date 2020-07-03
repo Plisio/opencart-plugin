@@ -29,6 +29,7 @@ class ControllerPaymentPlisio extends Controller
         $this->data['heading_title'] = $this->language->get('heading_title');
         $this->data['entry_status'] = $this->language->get('entry_status');
         $this->data['entry_api_secret_key'] = $this->language->get('entry_api_secret_key');
+        $this->data['entry_sort_order'] = $this->language->get('entry_sort_order');
         $this->data['entry_currency'] = $this->language->get('entry_currency');
         $this->data['entry_currency_hint'] = $this->language->get('entry_currency_hint');
         $this->data['entry_order_status'] = $this->language->get('entry_order_status');
@@ -82,9 +83,12 @@ class ControllerPaymentPlisio extends Controller
             'separator' => ' :: '
         );
 
-        $fields = array('plisio_status', 'plisio_api_secret_key', 'plisio_receive_currencies',
-            'plisio_order_status_id', 'plisio_pending_status_id', 'plisio_confirming_status_id', 'plisio_paid_status_id',
-            'plisio_invalid_status_id', 'plisio_expired_status_id', 'plisio_changeback_status_id', 'plisio_canceled_status_id', 'plisio_white_label'
+        $fields = array(
+            'plisio_status', 'plisio_api_secret_key', 'plisio_receive_currencies',
+            'plisio_order_status_id', 'plisio_pending_status_id', 'plisio_confirming_status_id',
+            'plisio_paid_status_id', 'plisio_invalid_status_id', 'plisio_expired_status_id',
+            'plisio_changeback_status_id', 'plisio_canceled_status_id', 'plisio_white_label',
+            'plisio_sort_order'
         );
 
         $this->data['white_label_options'] = [
@@ -92,7 +96,7 @@ class ControllerPaymentPlisio extends Controller
             'true' => 'Enabled',
         ];
 
-        $defaults =[
+        $defaults = [
             'plisio_order_status_id' => 1,
             'plisio_pending_status_id' => 1,
             'plisio_confirming_status_id' => 1,
@@ -101,6 +105,7 @@ class ControllerPaymentPlisio extends Controller
             'plisio_expired_status_id' => 14,
             'plisio_invalid_status_id' => 10,
             'plisio_canceled_status_id' => 7,
+            'plisio_sort_order' => 1
         ];
         foreach ($fields as $field) {
             if (isset($this->request->post[$field])) {
@@ -113,7 +118,7 @@ class ControllerPaymentPlisio extends Controller
         }
 
         // Currency sort:
-        $this->receive_currencies = array_map(function($item) {
+        $this->receive_currencies = array_map(function ($item) {
             return $item['cid'];
         }, $this->data['receive_currencies']);
 
@@ -126,7 +131,7 @@ class ControllerPaymentPlisio extends Controller
         $this->data['plisio_receive_currencies'] = $this->plisio_receive_currencies;
 
         // sort:
-        usort($this->data['receive_currencies'], function($a, $b) {
+        usort($this->data['receive_currencies'], function ($a, $b) {
             $idxA = array_search($a['cid'], $this->plisio_receive_currencies);
             $idxB = array_search($b['cid'], $this->plisio_receive_currencies);
 
@@ -151,6 +156,10 @@ class ControllerPaymentPlisio extends Controller
     {
         if (!$this->user->hasPermission('modify', 'payment/plisio')) {
             $this->error['warning'] = $this->language->get('error_permission');
+        }
+
+        if (!isset($this->request->post['plisio_receive_currencies']) || empty($this->request->post['plisio_receive_currencies'])) {
+            $this->error['warning'] = $this->language->get('error_no_currencies');
         }
 
         if (!class_exists('PlisioClient')) {
