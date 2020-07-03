@@ -10,6 +10,7 @@ $_['text_test_mode_off'] = 'Off';
 $_['entry_status'] = 'Payment Method Enabled';
 $_['entry_test_mode'] = 'Test Mode';
 $_['entry_api_secret_key'] = 'API Secret Key';
+$_['entry_sort_order'] = 'Sort Order';
 $_['entry_white_label'] = 'White label processing';
 $_['entry_currency'] = 'Cryptocurrency';
 $_['entry_currency_receive_all'] = 'Check/uncheck all';
