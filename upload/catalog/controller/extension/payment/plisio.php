@@ -102,21 +102,15 @@ class ControllerExtensionPaymentPlisio extends Controller
                 'order_id' => $order_info['order_id'],
                 'plisio_invoice_id' => $response['data']['txn_id']
             );
-            if (isset($response['data']) && isset($response['data']['amount'])){
-                $orderData = array_merge($orderData, [
-                    'amount' => $response['data']['amount'],
-                    'hash' => $response['data']['hash'],
-                    'psys_cid' => $response['data']['psys_cid'],
-                    'currency' => $response['data']['currency'],
-                    'expire_utc' => date('Y-m-d H:i:s', $response['data']['expire_utc']),
-                    'qr_code' => $response['data']['qr_code']
-                ]);
+            if (isset($response['data']) && isset($response['data']['wallet_hash'])){
+                $response['data']['expire_utc'] = date('Y-m-d H:i:s', $response['data']['expire_utc']);
+                $orderData = array_merge($orderData, $response['data']);
             }
             $this->model_extension_payment_plisio->addOrder($orderData);
 
             $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('payment_plisio_order_status_id'));
-//            $this->cart->clear();
-            if (!isset($orderData['hash']) || empty($orderData['hash'])) {
+            $this->cart->clear();
+            if (!isset($orderData['wallet_hash']) || empty($orderData['wallet_hash'])) {
                 $this->response->redirect($response['data']['invoice_url']);
             } else {
                 $this->response->redirect($this->url->link('extension/payment/plisio/invoice', '', true));
@@ -135,7 +129,15 @@ class ControllerExtensionPaymentPlisio extends Controller
         $this->setupPlisioClient();
 
         $orderId = $this->session->data['order_id'];
+
+        if (!$orderId){
+            $this->response->redirect($this->url->link('common/home', '', true));
+        }
+
         $plisioOrder = $this->model_extension_payment_plisio->getOrder($orderId);
+        if (!$plisioOrder){
+            $this->response->redirect($this->url->link('common/home', '', true));
+        }
 
         $data = $plisioOrder;
 
@@ -217,10 +219,17 @@ class ControllerExtensionPaymentPlisio extends Controller
             $order_info = $this->model_checkout_order->getOrder($order_id);
             $ext_order = $this->model_extension_payment_plisio->getOrder($order_id);
 
+            $data = $this->request->post;
 
             if (!empty($order_info) && !empty($ext_order)) {
+                $data['plisio_invoice_id'] = $data['txn_id'];
+                $data['order_id'] = $order_id;
+
+                $this->model_extension_payment_plisio->updateOrder($data);
+                var_dump($data);
+
                 if ($ext_order) {
-                    switch ($this->request->post['status']) {
+                    switch ($data['status']) {
                         case 'completed':
                             $cg_order_status = 'payment_plisio_paid_status_id';
                             break;
@@ -234,7 +243,7 @@ class ControllerExtensionPaymentPlisio extends Controller
                             $cg_order_status = 'payment_plisio_canceled_status_id';
                             break;
                         case 'expired':
-                            if ($this->request->post['source_amount'] > 0) {
+                            if ($data['source_amount'] > 0) {
                                 $cg_order_status = 'payment_plisio_invalid_status_id';
                             } else {
                                 $cg_order_status = 'payment_plisio_canceled_status_id';
@@ -249,8 +258,8 @@ class ControllerExtensionPaymentPlisio extends Controller
 
                     if (!is_null($cg_order_status)) {
                         $comment = '';
-                        if (isset($this->request->post['comment']) && !empty($this->request->post['comment'])) {
-                            $comment = $this->request->post['comment'];
+                        if (isset($data['comment']) && !empty($data['comment'])) {
+                            $comment = $data['comment'];
                         }
                         $this->model_checkout_order->addOrderHistory($order_id, $this->config->get($cg_order_status), $comment/*, true*/);
                     }
