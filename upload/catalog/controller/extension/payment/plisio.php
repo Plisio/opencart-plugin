@@ -96,15 +96,27 @@ class ControllerExtensionPaymentPlisio extends Controller
         );
 
         $response = $this->plisio->createTransaction($request);
+
         if ($response && $response['status'] !== 'error' && !empty($response['data'])) {
-            $this->model_extension_payment_plisio->addOrder(array(
+            $orderData = array(
                 'order_id' => $order_info['order_id'],
                 'plisio_invoice_id' => $response['data']['txn_id']
-            ));
+            );
+            if (isset($response['data']) && isset($response['data']['amount'])){
+                $orderData = array_merge($orderData, [
+                    'amount' => $response['data']['amount'],
+                    'hash' => $response['data']['hash'],
+                    'psys_cid' => $response['data']['psys_cid'],
+                    'currency' => $response['data']['currency'],
+                    'expire_utc' => date('Y-m-d H:i:s', $response['data']['expire_utc']),
+                    'qr_code' => $response['data']['qr_code']
+                ]);
+            }
+            $this->model_extension_payment_plisio->addOrder($orderData);
 
             $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('payment_plisio_order_status_id'));
-            $this->cart->clear();
-            if ($this->model_setting_setting->getSettingValue('payment_plisio_white_label') == 'false') {
+//            $this->cart->clear();
+            if (!isset($orderData['hash']) || empty($orderData['hash'])) {
                 $this->response->redirect($response['data']['invoice_url']);
             } else {
                 $this->response->redirect($this->url->link('extension/payment/plisio/invoice', '', true));
@@ -117,24 +129,35 @@ class ControllerExtensionPaymentPlisio extends Controller
 
     public function invoice()
     {
+        $this->load->language('extension/payment/plisio');
         $this->load->model('extension/payment/plisio');
 //        $this->load->model('checkout/order');
         $this->setupPlisioClient();
 
         $orderId = $this->session->data['order_id'];
         $plisioOrder = $this->model_extension_payment_plisio->getOrder($orderId);
+
+        $data = $plisioOrder;
+
         $invoiceId = $plisioOrder['plisio_invoice_id'];
         $plisioParsedUrl = parse_url($this->plisio->apiEndPoint);
         $plisioInvoiceUrl = $plisioParsedUrl['scheme'] . '://' . $plisioParsedUrl['host'] . '/invoice/' . $invoiceId;
 
-        if ($this->model_setting_setting->getSettingValue('payment_plisio_white_label') == 'false'){
+        if (!isset($plisioOrder['amount'])){
             $this->response->redirect($plisioInvoiceUrl);
         }
 
-        $data = [
-            'invoice_id' => $invoiceId,
-            'invoice_url' => $plisioInvoiceUrl
-        ];
+        $data['breadcrumbs'] = array();
+
+        $data['breadcrumbs'][] = array(
+            'text' => $this->language->get('text_home'),
+            'href' => $this->url->link('common/home')
+        );
+
+        $data['breadcrumbs'][] = array(
+            'text' => $this->language->get('text_checkout'),
+            'href' => $this->url->link('checkout/checkout', '', true)
+        );
 
         $data['footer'] = $this->load->controller('common/footer');
         $data['header'] = $this->load->controller('common/header');
