@@ -5,6 +5,28 @@
     }
 </style>
 {{header}}
-<iframe name="plisio_iframe" id="plisio_iframe" width="100%" height="900px" style="border:0; margin: 0; padding: 0;" scrolling="no" src="{{ invoice_url }}"></iframe>
 
+<div class="container">
+    {% if breadcrumbs %}
+        <ul class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if breadcrumb.href and not breadcrumb.current %}
+                    <li><a href="{{ breadcrumb.href }}">
+                            {{ breadcrumb.text }}
+                        </a></li>
+                {% else %}
+                    <li class="text-muted {{ breadcrumb.current ? 'current' : 'disabled' }}">{{ breadcrumb.text }}</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <div class="row">
+        {{ amount }} <br/>
+        {{ hash }}<br/>
+        {{ currency }}<br/>
+        {{ expire_utc }}<br/>
+
+        <img src="{{ qr_code }}" />
+    </div>
+</div>
 {{footer}}

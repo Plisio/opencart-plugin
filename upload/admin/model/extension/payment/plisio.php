@@ -4,14 +4,24 @@ class ModelExtensionPaymentPlisio extends Model
 {
     public function install()
     {
-        $this->db->query("
+        try {
+            $result = $this->db->query("
       CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "plisio_order` (
         `plisio_order_id` INT(11) NOT NULL AUTO_INCREMENT,
         `order_id` INT(11) NOT NULL,
-        `plisio_invoice_id` VARCHAR(120),
+        `plisio_invoice_id` VARCHAR(40),
+        `amount` VARCHAR(40) DEFAULT '',
+        `hash` VARCHAR(120) DEFAULT '',
+        `psys_cid` VARCHAR(10) DEFAULT '',
+        `currency` VARCHAR(10) DEFAULT '',
+        `expire_utc` DATETIME DEFAULT NULL,
+        `qr_code` BLOB DEFAULT NULL,
         PRIMARY KEY (`plisio_order_id`)
       ) ENGINE=MyISAM DEFAULT COLLATE=utf8_general_ci;
     ");
+        } catch (Exception $exception) {
+            $this->log->write('Plisio plugin install table failed: ' . $exception->getMessage());
+        }
 
         $this->load->model('setting/setting');
 
