@@ -17,7 +17,7 @@ class ModelExtensionPaymentPlisio extends Model
         `currency` VARCHAR(10) DEFAULT '',
         `status` VARCHAR(10) DEFAULT 'new',
         `source_currency` VARCHAR(10) DEFAULT '',
-        `source_rate` VARCHAR(10) DEFAULT '',
+        `source_rate` VARCHAR(40) DEFAULT '',
         `expire_utc` DATETIME DEFAULT NULL,
         `qr_code` BLOB DEFAULT NULL,
         PRIMARY KEY (`plisio_order_id`)
