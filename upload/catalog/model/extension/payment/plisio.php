@@ -20,7 +20,7 @@ class ModelExtensionPaymentPlisio extends Model
         if (count($invalid) === 0) {
             $query = "INSERT INTO `" . DB_PREFIX . "plisio_order` SET `order_id` = '" . (int)$data['order_id'] . "', `plisio_invoice_id` = '" . $this->db->escape($data['plisio_invoice_id']) . "'";
             if (isset($data['wallet_hash']) && !empty($data['wallet_hash'])) {
-                $keys = ['amount', 'wallet_hash', 'psys_cid', 'currency', 'status', 'expire_utc', 'qr_code', 'source_currency', 'source_rate'];
+                $keys = ['amount', 'wallet_hash', 'psys_cid', 'currency', 'status', 'expire_utc', 'qr_code', 'source_currency', 'source_rate', 'expected_confirmations'];
                 $queryArr = [];
                 foreach ($keys as $key) {
                     if (isset($data[$key]) && !empty($data[$key])) {
@@ -42,7 +42,7 @@ class ModelExtensionPaymentPlisio extends Model
         $invalid = $this->validateRequiredData($data, ['wallet_hash']);
         if (count($invalid) === 0) {
             $query = "UPDATE `" . DB_PREFIX . "plisio_order` SET ";
-            $keys = ['pending_amount', 'status', 'qr_code'];
+            $keys = ['pending_amount', 'status', 'qr_code', 'confirmations'];
             $queryArr = [];
             foreach ($keys as $key) {
                 if (isset($data[$key]) && !empty($data[$key])) {

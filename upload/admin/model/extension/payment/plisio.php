@@ -20,6 +20,8 @@ class ModelExtensionPaymentPlisio extends Model
         `source_rate` VARCHAR(40) DEFAULT '',
         `expire_utc` DATETIME DEFAULT NULL,
         `qr_code` BLOB DEFAULT NULL,
+        `confirmations` TINYINT(2) DEFAULT 0,
+        `expected_confirmations` TINYINT(2) DEFAULT 0,
         PRIMARY KEY (`plisio_order_id`)
       ) ENGINE=MyISAM DEFAULT COLLATE=utf8_general_ci;
     ");
