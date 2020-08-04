@@ -124,6 +124,7 @@ class ControllerExtensionPaymentPlisio extends Controller
 
     public function invoice()
     {
+
         $this->load->language('extension/payment/plisio');
         $this->load->model('extension/payment/plisio');
 //        $this->load->model('checkout/order');
@@ -210,6 +211,9 @@ class ControllerExtensionPaymentPlisio extends Controller
         if (isset($post['expire_utc'])){
             $post['expire_utc'] = (string)$post['expire_utc'];
         }
+        if (isset($post['tx_urls'])){
+            $post['tx_urls'] = html_entity_decode($post['tx_urls']);
+        }
         $postString = serialize($post);
         $this->load->model('setting/setting');
         $checkKey = hash_hmac('sha1', $postString, $this->model_setting_setting->getSettingValue('payment_plisio_api_secret_key'));
@@ -237,6 +241,9 @@ class ControllerExtensionPaymentPlisio extends Controller
                 if (isset($ext_order['amount']) && !empty($ext_order['amount'])) {
                     $data['plisio_invoice_id'] = $data['txn_id'];
                     $data['order_id'] = $order_id;
+                    if (isset($data['tx_urls'])){
+                        $data['tx_urls'] = html_entity_decode($data['tx_urls']);
+                    }
                     $this->model_extension_payment_plisio->updateOrder($data);
                 }
 
