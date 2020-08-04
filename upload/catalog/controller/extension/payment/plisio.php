@@ -102,10 +102,11 @@ class ControllerExtensionPaymentPlisio extends Controller
                 'order_id' => $order_info['order_id'],
                 'plisio_invoice_id' => $response['data']['txn_id']
             );
-            if (isset($response['data']) && isset($response['data']['wallet_hash'])){
+            if (isset($response['data']) && isset($response['data']['wallet_hash']) && $this->verifyCallbackData($response['data'])){
                 $response['data']['expire_utc'] = date('Y-m-d H:i:s', $response['data']['expire_utc']);
                 $orderData = array_merge($orderData, $response['data']);
             }
+
             $this->model_extension_payment_plisio->addOrder($orderData);
 
             $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('payment_plisio_order_status_id'));
@@ -145,7 +146,7 @@ class ControllerExtensionPaymentPlisio extends Controller
         $plisioParsedUrl = parse_url($this->plisio->apiEndPoint);
         $plisioInvoiceUrl = $plisioParsedUrl['scheme'] . '://' . $plisioParsedUrl['host'] . '/invoice/' . $invoiceId;
 
-        if (!isset($plisioOrder['amount'])){
+        if (!isset($plisioOrder['wallet_hash'])){
             $this->response->redirect($plisioInvoiceUrl);
         }
 
@@ -189,19 +190,23 @@ class ControllerExtensionPaymentPlisio extends Controller
         }
     }
 
-    private function verifyCallbackData()
+    private function verifyCallbackData($data)
     {
-        if (!isset($this->request->post['verify_hash'])) {
+        if (!isset($data['verify_hash'])) {
             return false;
         }
 
-        $post = $this->request->post;
+        $post = $data;
         $verifyHash = $post['verify_hash'];
         unset($post['verify_hash']);
         ksort($post);
+        if (isset($post['expire_utc'])){
+            $post['expire_utc'] = (string)$post['expire_utc'];
+        }
         $postString = serialize($post);
         $this->load->model('setting/setting');
         $checkKey = hash_hmac('sha1', $postString, $this->model_setting_setting->getSettingValue('payment_plisio_api_secret_key'));
+
         if ($checkKey != $verifyHash) {
             return false;
         }
@@ -211,7 +216,7 @@ class ControllerExtensionPaymentPlisio extends Controller
 
     public function callback()
     {
-        if ($this->verifyCallbackData()) {
+        if ($this->verifyCallbackData($this->request->post)) {
             $this->load->model('checkout/order');
             $this->load->model('extension/payment/plisio');
 
@@ -222,11 +227,11 @@ class ControllerExtensionPaymentPlisio extends Controller
             $data = $this->request->post;
 
             if (!empty($order_info) && !empty($ext_order)) {
-                $data['plisio_invoice_id'] = $data['txn_id'];
-                $data['order_id'] = $order_id;
-
-                $this->model_extension_payment_plisio->updateOrder($data);
-                var_dump($data);
+                if (isset($ext_order['amount']) && !empty($ext_order['amount'])) {
+                    $data['plisio_invoice_id'] = $data['txn_id'];
+                    $data['order_id'] = $order_id;
+                    $this->model_extension_payment_plisio->updateOrder($data);
+                }
 
                 if ($ext_order) {
                     switch ($data['status']) {
