@@ -22,6 +22,7 @@ class ModelExtensionPaymentPlisio extends Model
         `qr_code` BLOB DEFAULT NULL,
         `confirmations` TINYINT(2) DEFAULT 0,
         `expected_confirmations` TINYINT(2) DEFAULT 0,
+        `tx_urls` TEXT DEFAULT NULL,
         PRIMARY KEY (`plisio_order_id`)
       ) ENGINE=MyISAM DEFAULT COLLATE=utf8_general_ci;
     ");
