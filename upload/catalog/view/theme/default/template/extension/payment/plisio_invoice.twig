@@ -1,32 +1,276 @@
 <style>
-    body{
-        padding: 0;
-        margin: 0;
-    }
+  .invoice__amount {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .invoice__psysImg {
+    margin-left: 1rem;
+  }
+
+  .invoice .invoice__progress {
+    position: relative;
+    height: 2rem;
+    background: #dfdfdf;
+  }
+
+  .invoice__progressBar {
+    will-change: width;
+    transition: width 1s linear !important;
+  }
+
+  .invoice__progressHint {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    text-shadow: 0 0 1px #000;
+    color: #fff;
+  }
+
+  .invoice__qr {
+    margin: 2rem auto;
+  }
+
+  .invoice__btn_copy {
+    cursor: pointer;
+  }
 </style>
-{{header}}
+{{ header }}
 
 <div class="container">
-    {% if breadcrumbs %}
-        <ul class="breadcrumb">
-            {% for breadcrumb in breadcrumbs %}
-                {% if breadcrumb.href and not breadcrumb.current %}
-                    <li><a href="{{ breadcrumb.href }}">
-                            {{ breadcrumb.text }}
-                        </a></li>
-                {% else %}
-                    <li class="text-muted {{ breadcrumb.current ? 'current' : 'disabled' }}">{{ breadcrumb.text }}</li>
-                {% endif %}
-            {% endfor %}
-        </ul>
-    {% endif %}
-    <div class="row">
-        {{ amount }} <br/>
-        {{ hash }}<br/>
-        {{ currency }}<br/>
-        {{ expire_utc }}<br/>
-
-        <img src="{{ qr_code }}" />
-    </div>
+  {% if breadcrumbs %}
+    <ul class="breadcrumb">
+      {% for breadcrumb in breadcrumbs %}
+        {% if breadcrumb.href and not breadcrumb.current %}
+          <li><a href="{{ breadcrumb.href }}">
+              {{ breadcrumb.text }}
+            </a></li>
+        {% else %}
+          <li class="text-muted {{ breadcrumb.current ? 'current' : 'disabled' }}">{{ breadcrumb.text }}</li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  {% endif %}
 </div>
-{{footer}}
+
+<div class="invoice__wrapper container">
+  <div class="row">
+    <div class="invoice col-md-offset-3 col-md-6 col-sm-12">
+
+      <div class="invoice__progress progress">
+        <div
+          class="invoice__progressBar progress-bar"
+          role="progressbar"
+          aria-valuenow="0"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          style="width: 0"
+          data-expire-utc="{{ expire_utc }}"
+        >
+          <span class="sr-only">0% Complete</span>
+        </div>
+        <span class="invoice__progressHint"></span>
+      </div>
+
+      <div class="row">
+        <div class="col-xs-4">
+          <h4><small>Order #</small>{{ order_id }}</h4>
+        </div>
+        <div class="col-xs-8 text-right">
+          <div class="invoice__amount">
+            <div class="invoice__amountSum">
+              <strong>{{ amount }} {{ currency }}</strong> <br>
+              {{ amount }} {{ currency }}
+            </div>
+
+            <img
+              class="invoice__psysImg"
+              src="{{ 'https://plisio.net/img/psys-icon/' ~ currency ~ '.svg' }}"
+              alt="{{ currency }}"
+              width="20"
+              height="20"
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <img
+          class="invoice__qr"
+          src="{{ qr_code }}"
+          alt="invoice qr code"
+          width="224"
+          height="224"
+        >
+      </div>
+
+      <p class="invoice__hint text-center text-large">Send the indicated amount to the address below:</p>
+
+      <div class="form-group">
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control"
+            value="{{ hash }}"
+            readonly
+            onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Hash copied" data-trigger="click"
+          >
+          <span class="input-group-addon" onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Hash copied" data-trigger="click">
+            <i class="glyphicon glyphicon-file invoice__btn_copy"></i>
+          </span>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control"
+            value="{{ amount }}"
+            readonly
+            onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Amount copied" data-trigger="click"
+          >
+          <span class="input-group-addon" onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Amount copied" data-trigger="click">
+            <i class="glyphicon glyphicon-file invoice__btn_copy"></i>
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="demo"></div>
+
+
+{% raw %}
+  <script async defer>
+    function Timer(options) {
+      if (Object.keys(options).length > 0) {
+        if (options.elSelector) {
+          this.el = document.querySelector(options.elSelector);
+        } else {
+          throw new ReferenceError("Invalid element selector passed");
+        }
+        if (options.timestamp) {
+          this.countDownDate = new Date(options.timestamp);
+        } else {
+          throw new ReferenceError("Invalid timestamp");
+        }
+        if (options.callback) {
+          this.callback = options.callback;
+        }
+        this._dateToRender = Object.create(null);
+      } else {
+        throw new ReferenceError("Invalid input data");
+      }
+
+    }
+
+    Timer.prototype.calc = function () {
+      this._now = new Date().getTime();
+      this._distance = this.countDownDate - this._now;
+      // this._dateToRender.days = Math.floor(this._distance / (1000 * 60 * 60 * 24));
+      this._dateToRender.hours = Math.floor((this._distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      this._dateToRender.minutes = Math.floor((this._distance % (1000 * 60 * 60)) / (1000 * 60));
+      this._dateToRender.seconds = Math.floor((this._distance % (1000 * 60)) / 1000);
+      this._progress = 100 - (this._distance / this._distanceAll) * 100;
+      this._progress = Math.round(this._progress * 100) / 100;
+    };
+
+    Timer.prototype.render = function () {
+      this.el.style.width = this._progress + '%';
+      this.el.setAttribute('aria-valuenow', this._progress);
+      this.el.querySelector('.sr-only').textContent = this._progress + '% Complete';
+      var stringToRender = '';
+      if (this._distance <= 0) {
+        var self = this;
+        setTimeout(function () {
+          stringToRender += 'This order has been expired.';
+          self.el.nextElementSibling.textContent = stringToRender;
+        }, 1000);
+      } else {
+        for (var key in this._dateToRender) {
+          this._dateToRender[key] = this._dateToRender[key] >= 10 ? this._dateToRender[key] : '0' + this._dateToRender[key]
+        }
+        stringToRender = Object.values(this._dateToRender).join(':');
+        this.el.nextElementSibling.textContent = stringToRender;
+      }
+    };
+
+    Timer.prototype.fin = function () {
+      if (this.callback) {
+        if (typeof this.callback === 'function') {
+          this.callback();
+        } else {
+          throw new ReferenceError("Callback-param must be function.");
+        }
+      }
+      delete this;
+    };
+
+    Timer.prototype.run = function () {
+      this.calc();
+      this._distanceAll = this._distance;
+      this.render();
+      if (this._distance <= 0) {
+        clearTimeout(this._timerId);
+        this.fin(this);
+      }
+      var self = this;
+      this._timerId = setTimeout(function runTimer() {
+        self.calc();
+        self.render();
+        if (self._distance < 0) {
+          clearTimeout(self._timerId);
+          self.fin(self);
+        } else {
+          self._timerId = setTimeout(runTimer, 1000);
+        }
+      }, 1000);
+    };
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var elProgressBar = document.querySelector('.invoice__progressBar');
+      var countDownDate = new Date(elProgressBar.dataset.expireUtc).getTime();
+      (function () {
+        function InvoiceTimer(el, options) {
+          Timer.apply(this, arguments);
+        }
+        InvoiceTimer.prototype = Object.create(Timer.prototype);
+        InvoiceTimer.prototype.constructor = InvoiceTimer;
+        var invoiceTimer = new InvoiceTimer(
+          {
+            elSelector: '.invoice__progressBar',
+            timestamp: countDownDate,
+            callback: function () {
+              // console.info('Callback-function called after invoice timer finishes.')
+            },
+          }
+        );
+        invoiceTimer.run();
+      })();
+    });
+
+
+    function copyInvoiceValue (el) {
+      var textCopyTo = el.parentElement.querySelector('input');
+      try {
+        textCopyTo.select();
+        textCopyTo.focus();
+        document.execCommand('copy');
+        setTimeout(function () {
+          $(el).tooltip('hide');
+        }, 500)
+      } catch(err) {
+        console.log(err)
+      }
+    }
+  </script>
+{% endraw %}
+
+{{ footer }}
