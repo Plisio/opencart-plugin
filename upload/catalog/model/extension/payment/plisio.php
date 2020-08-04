@@ -42,7 +42,7 @@ class ModelExtensionPaymentPlisio extends Model
         $invalid = $this->validateRequiredData($data, ['wallet_hash']);
         if (count($invalid) === 0) {
             $query = "UPDATE `" . DB_PREFIX . "plisio_order` SET ";
-            $keys = ['pending_amount', 'status', 'expire_utc', 'qr_code'];
+            $keys = ['pending_amount', 'status', 'qr_code'];
             $queryArr = [];
             foreach ($keys as $key) {
                 if (isset($data[$key]) && !empty($data[$key])) {
