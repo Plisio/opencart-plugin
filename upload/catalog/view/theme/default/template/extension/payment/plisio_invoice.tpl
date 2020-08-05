@@ -1,10 +1,15 @@
-<style>
-    body{
-        padding: 0;
-        margin: 0;
-    }
-</style>
+
 <?php echo $header; ?>
-<iframe name="plisio_iframe" id="plisio_iframe" width="100%" height="900px" style="border:0; margin: 0; padding: 0;" scrolling="no" src="<?php echo $invoice_url; ?>"></iframe>
+<div class="container">
+    <div class="row">
+        <?php echo $amount; ?> <br/>
+        <?php echo $pending_amount; ?> <br/>
+        <?php echo $wallet_hash; ?><br/>
+        <?php echo $currency; ?><br/>
+        <?php echo $expire_utc; ?><br/>
+
+        <img src="<?php echo $qr_code; ?>" />
+    </div>
+</div>
 
 <?php echo $footer; ?>

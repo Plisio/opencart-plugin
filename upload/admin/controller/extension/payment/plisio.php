@@ -46,6 +46,7 @@ class ControllerExtensionPaymentPlisio extends Controller
         $data['button_cancel'] = $this->language->get('button_cancel');
         $data['tab_settings'] = $this->language->get('tab_settings');
         $data['tab_order_status'] = $this->language->get('tab_order_status');
+        $data['entry_sort_order'] = $this->language->get('entry_sort_order');
 
         $data['action'] = $this->url->link('extension/payment/plisio', 'token=' . $this->session->data['token'], true);
         $data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true);
@@ -81,7 +82,8 @@ class ControllerExtensionPaymentPlisio extends Controller
 
         $fields = array('plisio_status', 'plisio_api_secret_key', 'plisio_receive_currencies',
             'plisio_order_status_id', 'plisio_pending_status_id', 'plisio_confirming_status_id', 'plisio_paid_status_id',
-            'plisio_invalid_status_id', 'plisio_expired_status_id', 'plisio_changeback_status_id', 'plisio_canceled_status_id', 'plisio_white_label'
+            'plisio_invalid_status_id', 'plisio_expired_status_id', 'plisio_changeback_status_id',
+            'plisio_canceled_status_id', 'plisio_white_label', 'plisio_sort_order'
         );
 
         $data['white_label_options'] = [
