@@ -143,11 +143,22 @@ class ControllerExtensionPaymentPlisio extends Controller
 
         $data = $plisioOrder;
 
-
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($data));
             return;
+        }   else {
+            if (!empty($data['tx_urls'])) {
+                try {
+                    $txUrl = json_decode($data['tx_urls']);
+                    if (!empty($txUrl)) {
+                        $txUrl = gettype($txUrl) === 'string' ? $txUrl : $txUrl[count($txUrl) - 1];
+                        $data['txUrl'] = $txUrl;
+                    }
+                } catch (Exception $e) {
+                    return array(ErrorCode::$ParseXmlError, null);
+                }
+            }
         }
 
         $invoiceId = $plisioOrder['plisio_invoice_id'];

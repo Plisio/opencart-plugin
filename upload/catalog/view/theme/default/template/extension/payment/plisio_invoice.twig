@@ -47,10 +47,15 @@
     text-align: center;
   }
 
-  .invoice__result .glyphicon {
+  .invoice a > .glyphicon {
+    margin-right: .5em;
+  }
+
+  .invoice__result .glyphicon:not(.glyphicon-share) {
     display: block;
     margin: 0 auto 2rem;
     font-size: 80px;
+    /*color: #23a1d1; !* bootstrap primary-color *!*/
   }
 
   @keyframes rotate {
@@ -88,6 +93,8 @@
   {% endif %}
 </div>
 
+{% set pending_amount = pending_amount >= 0 ? pending_amount : pending_amount * (-1) %}
+
 <div class="invoice__wrapper container">
   <div class="row">
     <div
@@ -113,111 +120,114 @@
         </div>
       {% endif %}
 
-      {% if status in ['new'] or (status in ['pendig'] and pending_amount < amount)  %}
-        <div class="row">
-          <div class="col-xs-4">
-            <h4><small>Order #</small>{{ order_id }}</h4>
-          </div>
-          <div class="col-xs-8 text-right">
-            <div class="invoice__amount">
-              <div class="invoice__amountSum">
-                <strong>{{ amount }} {{ currency }}</strong> <br>
-                {{ (amount/source_rate)|number_format(2) }} {{ source_currency }}
+      <div class="invoice__content">
+        {% if status in ['new'] or (status in ['pending'] and pending_amount < amount)  %}
+          <div class="row">
+            <div class="col-xs-4">
+              <h4><small>Order #</small>{{ order_id }}</h4>
+            </div>
+            <div class="col-xs-8 text-right">
+              <div class="invoice__amount">
+                <div class="invoice__amountSum">
+                  <strong>{{ amount }} {{ currency }}</strong> <br>
+                  {{ (amount/source_rate)|number_format(2) }} {{ source_currency }}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="text-center">
-          <img
-            class="invoice__qr"
-            src="{{ qr_code }}"
-            alt="invoice qr code"
-            width="160"
-            height="160"
-          >
-        </div>
-        <p class="invoice__hint text-center text-large">Send the indicated amount to the address below:</p>
-        <div class="form-group">
-          <div class="input-group">
-            <span class="input-group-addon">
-              <img
-                class="invoice__psysImg"
-                src="{{ 'https://plisio.net/img/psys-icon/' ~ currency ~ '.svg' }}"
-                alt="{{ currency }}"
-                width="16"
-                height="16"
+          <div class="text-center">
+            <img
+              class="invoice__qr"
+              src="{{ qr_code }}"
+              alt="invoice qr code"
+              width="160"
+              height="160"
+            >
+          </div>
+          <p class="invoice__hint text-center text-large">Send the indicated amount to the address below:</p>
+          <div class="form-group">
+            <div class="input-group">
+              <span class="input-group-addon">
+                <img
+                  class="invoice__psysImg"
+                  src="{{ 'https://plisio.net/img/psys-icon/' ~ currency ~ '.svg' }}"
+                  alt="{{ currency }}"
+                  width="16"
+                  height="16"
+                >
+              </span>
+              <input
+                type="text"
+                class="form-control"
+                value="{{ wallet_hash }}"
+                readonly
+                onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Hash copied" data-trigger="click"
               >
-            </span>
-            <input
-              type="text"
-              class="form-control"
-              value="{{ wallet_hash }}"
-              readonly
-              onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Hash copied" data-trigger="click"
-            >
-            <span class="input-group-addon" onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Hash copied" data-trigger="click">
-              <i class="glyphicon glyphicon-duplicate invoice__btn_copy"></i>
-            </span>
+              <span class="input-group-addon" onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Hash copied" data-trigger="click">
+                <i class="glyphicon glyphicon-duplicate invoice__btn_copy"></i>
+              </span>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <div class="input-group">
-            <span class="input-group-addon">{{ currency }}</span>
-            <input
-              type="text"
-              class="form-control"
-              value="{{ amount }}"
-              readonly
-              onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Amount copied" data-trigger="click"
-            >
-            <span class="input-group-addon" onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Amount copied" data-trigger="click">
-              <i class="glyphicon glyphicon-duplicate invoice__btn_copy"></i>
-            </span>
+          <div class="form-group">
+            <div class="input-group">
+              <span class="input-group-addon">{{ currency }}</span>
+              <input
+                type="text"
+                class="form-control"
+                value="{{ amount }}"
+                readonly
+                onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Amount copied" data-trigger="click"
+              >
+              <span class="input-group-addon" onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Amount copied" data-trigger="click">
+                <i class="glyphicon glyphicon-duplicate invoice__btn_copy"></i>
+              </span>
+            </div>
           </div>
-        </div>
-      {% elseif status in ['pending'] and pending_amount >= amount %}
-        <div class="invoice__result text-center">
-          <i class="glyphicon glyphicon-refresh"></i>
-          <h3>Waiting for {{ confirmations }} of {{ expected_confirmations }} confirm{{ expected_confirmations > 1 ? 's' :  '' }}</h3>
-          <p>Please, wait until network confirms your payment. It usually takes 15-60 minutes.</p>
-          {#          check-transaction-link#}
-        </div>
-      {% elseif status in ['finish', 'completed'] %}
-        <div class="invoice__result text-center">
-          <i class="glyphicon glyphicon-ok"></i>
-          <h3>Payment complete</h3>
-          {#          // check-transaction-link#}
-        </div>
-      {% elseif status in ['mismatch'] %}
-        <div class="invoice__result text-center">
-          <i class="glyphicon glyphicon-ok"></i>
-          <h3>The order has been overpaid</h3>
-          <p>You have payed {{ pending_amount|abs }} {{ currency }},
-            it is more than required sum. In case of inconvenience, please, contact store`s support.</p>
-          {#          // check-transaction-link#}
-        </div>
-      {% elseif status in ['expired', 'cancelled'] %}
-        {% if (pending_amount == 0) %}
+        {% elseif status in ['pending'] and pending_amount >= amount %}
           <div class="invoice__result text-center">
-            <i class="glyphicon glyphicon-repeat"></i>
-            <h3>The order has not been fully paid</h3>
-            <p>We have received  {{ pending_amount }} {{ currency }} of {{ amount }}  {{ currency }} required.
-              To get your payment back, please, contact store`s support.</p>
+            <i class="glyphicon glyphicon-refresh text-primary"></i>
+            {% set stringConfirm = expected_confirmations > 1 ? 'confirms' :  'confirm' %}
+            <h3>Waiting for {{ confirmations }} of {{ expected_confirmations }} {{ stringConfirm }}</h3>
+            <p>Please, wait until network confirms your payment. It usually takes 15-60 minutes.</p>
+            <a href="{{ txUrl }}" title="Check my transaction" target="_blank" rel="noopener"><i class="glyphicon glyphicon-share"></i>Check my transaction</a>
           </div>
+        {% elseif status in ['finish', 'completed'] %}
+          <div class="invoice__result text-center">
+            <i class="glyphicon glyphicon-ok text-primary"></i>
+            <h3>Payment complete</h3>
+            <a href="{{ txUrl }}" title="Check my transaction" target="_blank" rel="noopener"><i class="glyphicon glyphicon-share"></i>Check my transaction</a>
+          </div>
+        {% elseif status in ['mismatch'] %}
+          <div class="invoice__result text-center">
+            <i class="glyphicon glyphicon-ok text-primary"></i>
+            <h3>The order has been overpaid</h3>
+            <p>You have payed {{ pending_amount }} {{ currency }},
+              it is more than required sum. In case of inconvenience, please, contact store`s support.</p>
+              <a href="{{ txUrl }}" title="Check my transaction" target="_blank" rel="noopener"><i class="glyphicon glyphicon-share"></i>Check my transaction</a>
+          </div>
+        {% elseif status in ['expired', 'cancelled'] %}
+          {% if pending_amount > 0 %}
+            <div class="invoice__result text-center">
+              <i class="glyphicon glyphicon-repeat text-primary"></i>
+              <h3>The order has not been fully paid</h3>
+              <p>We have received  {{ pending_amount }} {{ currency }} of {{ amount }}  {{ currency }} required.
+                To get your payment back, please, contact store`s support.</p>
+            </div>
+          {% else %}
+            <div class="invoice__result text-center">
+              <i class="glyphicon glyphicon-repeat text-primary"></i>
+              <h3>The order has expired</h3>
+              <p>Please, <a href="/" title="go back">go back</a> and create a new one.</p>
+            </div>
+          {% endif %}
         {% else %}
           <div class="invoice__result text-center">
-            <i class="glyphicon glyphicon-repeat"></i>
-            <h3>The order has expired</h3>
-            <p>Please, <a href="/" title="go back">go back</a> and create a new one.</p>
+            <i class="glyphicon glyphicon-warning-sign text-danger"></i>
+            <h3>Ooops...</h3>
+            <p>Something went wrong with this operation. Please, contact store`s support, so we could figure this out.</p>
           </div>
         {% endif %}
-      {% else %}
-        <div class="invoice__result text-center">
-          <i class="glyphicon glyphicon-warning-sign"></i>
-          <h3>Ooops...</h3>
-          <p>Something went wrong with this operation. Please, contact store`s support, so we could figure this out.</p>
-        </div>
-      {% endif %}
+      </div>
   </div>
 </div>
 
@@ -331,6 +341,19 @@
       })();
 
 
+      function getTxUrl (tx_urls) {
+        var txUrl = '';
+        if (tx_urls) {
+          try {
+            txUrl = JSON.parse(tx_urls);
+            txUrl = typeof txUrl === 'string' ? txUrl : txUrl[txUrl.length-1]
+          } catch (error) {
+            console.error('Failed to parse tx_urls: ', error);
+          }
+        }
+        return txUrl;
+      }
+
       if (!window.checkInvoiceInterval){
         window.checkInvoiceInterval = setInterval(function () {
           $.ajax({
@@ -340,68 +363,72 @@
             data: {
               invoice: document.querySelector('.invoice').dataset.invoiceId,
             },
-            error: function (e) {
+            error: function (error) {
+              console.error('check invoice interval error: ', error);
               clearTimeout(window.checkInvoiceInterval);
               window.InvoiceTimer.fin();
             },
             success: function (response) {
-              if (['new'].includes(response.status)) {
+              if (['new'].includes(response.status)
+                || ['pending'].includes(response.status) && Math.abs(response.pending_amount) < elInvoice.dataset.invoiceAmount) {
                 return;
               }
               clearTimeout(window.checkInvoiceInterval);
               var resultContent = '';
+              var txUrl = getTxUrl(response.tx_urls);
               if (['pending'].includes(response.status)) {
-                if (Math.abs(response.pending_amount) >= elInvoice.dataset.invoiceAmount) {
-                  resultContent += '<div class="invoice__result text-center">' +
-                      '<i class="glyphicon glyphicon-refresh"></i>' +
-                      '<h3>Waiting for ' + response.confirmations + ' of ' + response.expected_confirmations + ' confirm' + response.expected_confirmations > 1 ? 's' : '' + '</h3>' +
-                      '<p>Please, wait until network confirms your payment. It usually takes 15-60 minutes.</p>' +
-                    // check-transaction-link
-                    '</div>';
-                } else {
-                  return;
-                }
+                var confirmString =  response.expected_confirmations > 1 ? 'confirms' : 'confirm';
+                resultContent += '<div class="invoice__result text-center">' +
+                    '<i class="glyphicon glyphicon-refresh text-primary"></i>' +
+                    '<h3>Waiting for ' + response.confirmations + ' of ' + response.expected_confirmations + ' ' + confirmString + '</h3>' +
+                    '<p>Please, wait until network confirms your payment. It usually takes 15-60 minutes.</p>' +
+                    '<a href="'+ txUrl + '" title="Check my transaction" target="_blank" rel="noopener"><i class="glyphicon glyphicon-share"></i>Check my transaction</a>' +
+                  '</div>';
               } else if (['finish', 'completed'].includes(response.status)) {
                 resultContent += '<div class="invoice__result text-center">' +
-                    '<i class="glyphicon glyphicon-ok"></i>' +
+                    '<i class="glyphicon glyphicon-ok text-primary"></i>' +
                     '<h3>Payment complete</h3>' +
-                  // check-transaction-link
+                    '<a href="'+ txUrl + '" title="Check my transaction" target="_blank" rel="noopener"><i class="glyphicon glyphicon-share"></i>Check my transaction</a>' +
                   '</div>';
               } else if (['mismatch'].includes(response.status)) {
                 resultContent += '<div class="invoice__result text-center">' +
-                    '<i class="glyphicon glyphicon-ok"></i>' +
+                    '<i class="glyphicon glyphicon-ok text-primary"></i>' +
                     '<h3>The order has been overpaid</h3>' +
                     '<p>You have payed ' + Math.abs(response.pending_amount) + ' ' + response.currency + ', ' +
                     'it is more than required sum. In case of inconvenience, please, contact store`s support.</p>' +
-                  // check-transaction-link
+                    '<a href="'+ txUrl + '" title="Check my transaction" target="_blank" rel="noopener"><i class="glyphicon glyphicon-share"></i>Check my transaction</a>' +
                   '</div>';
               } else if (['expired', 'cancelled'].includes(response.status)) {
                 if (!!response.pending_amount) {
                   resultContent += '<div class="invoice__result text-center">' +
-                      '<i class="glyphicon glyphicon-repeat"></i>' +
+                      '<i class="glyphicon glyphicon-repeat text-primary"></i>' +
                       '<h3>The order has not been fully paid</h3>' +
                       '<p>We have received '+ response.pending_amount + ' ' + response.currency + ' of ' + elInvoice.dataset.invoiceAmount + ' '
                       + elInvoice.dataset.invoiceCurrency + ' required. To get your payment back, please, contact store`s support.</p>' +
                     '</div>';
                 } else {
                   resultContent += '<div class="invoice__result text-center">' +
-                      '<i class="glyphicon glyphicon-repeat"></i>' +
+                      '<i class="glyphicon glyphicon-repeat text-primary"></i>' +
                       '<h3>The order has expired</h3>' +
                       '<p>Please, <a href="/" title="go back">go back</a> and create a new one.</p>' +
                     '</div>';
                 }
               } else if (['error'].includes(response.status)) {
                 resultContent += '<div class="invoice__result text-center">' +
-                    '<i class="glyphicon glyphicon-warning-sign"></i>' +
+                    '<i class="glyphicon glyphicon-warning-sign text-danger"></i>' +
                     '<h3>Ooops...</h3>' +
                     '<p>Something went wrong with this operation. Please, contact store`s support, so we could figure this out.</p>' +
                   '</div>';
                 console.error('error');
               }
-              elInvoice.innerHTML = resultContent;
+              if (['pending'].includes(response.status)) {
+                elInvoice.querySelector('.invoice__content').innerHTML = resultContent;
+              } else {
+                elInvoice.innerHTML = resultContent;
+              }
             }
           });
-        }, 3*1000);
+        }, 15*1000);
       }
     });
 
