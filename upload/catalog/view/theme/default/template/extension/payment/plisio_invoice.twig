@@ -93,8 +93,6 @@
   {% endif %}
 </div>
 
-{% set pending_amount = pending_amount >= 0 ? pending_amount : pending_amount * (-1) %}
-
 <div class="invoice__wrapper container">
   <div class="row">
     <div
@@ -121,7 +119,7 @@
       {% endif %}
 
       <div class="invoice__content">
-        {% if status in ['new'] or (status in ['pending'] and pending_amount < amount)  %}
+        {% if status in ['new'] or (status in ['pending'] and pending_amount > 0)  %}
           <div class="row">
             <div class="col-xs-4">
               <h4><small>Order #</small>{{ order_id }}</h4>
@@ -183,11 +181,11 @@
               </span>
             </div>
           </div>
-        {% elseif status in ['pending'] and pending_amount >= amount %}
+        {% elseif status in ['pending'] and pending_amount <= 0 %}
           <div class="invoice__result text-center">
             <i class="glyphicon glyphicon-refresh text-primary"></i>
-            {% set stringConfirm = expected_confirmations > 1 ? 'confirms' :  'confirm' %}
-            <h3>Waiting for {{ confirmations }} of {{ expected_confirmations }} {{ stringConfirm }}</h3>
+            {% set stringConfirm = expected_confirmations > 1 ? 'confirmations' :  'confirmation' %}
+            <h3>Waiting for {{ expected_confirmations-confirmations }} of {{ expected_confirmations }} {{ stringConfirm }}</h3>
             <p>Please, wait until network confirms your payment. It usually takes 15-60 minutes.</p>
             <a href="{{ txUrl }}" title="Check my transaction" target="_blank" rel="noopener"><i class="glyphicon glyphicon-share"></i>Check my transaction</a>
           </div>
@@ -201,16 +199,16 @@
           <div class="invoice__result text-center">
             <i class="glyphicon glyphicon-ok text-primary"></i>
             <h3>The order has been overpaid</h3>
-            <p>You have payed {{ pending_amount }} {{ currency }},
+            <p>You have payed {{ amount + pending_amount * (-1) }} {{ currency }},
               it is more than required sum. In case of inconvenience, please, contact store`s support.</p>
               <a href="{{ txUrl }}" title="Check my transaction" target="_blank" rel="noopener"><i class="glyphicon glyphicon-share"></i>Check my transaction</a>
           </div>
         {% elseif status in ['expired', 'cancelled'] %}
-          {% if pending_amount > 0 %}
+          {% if pending_amount < amount %}
             <div class="invoice__result text-center">
               <i class="glyphicon glyphicon-repeat text-primary"></i>
               <h3>The order has not been fully paid</h3>
-              <p>We have received  {{ pending_amount }} {{ currency }} of {{ amount }}  {{ currency }} required.
+              <p>We have received  {{ amount - pending_amount }} {{ currency }} of {{ amount }}  {{ currency }} required.
                 To get your payment back, please, contact store`s support.</p>
             </div>
           {% else %}
@@ -328,7 +326,7 @@
         }
         InvoiceTimer.prototype = Object.create(Timer.prototype);
         InvoiceTimer.prototype.constructor = InvoiceTimer;
-        var invoiceTimer = new InvoiceTimer(
+        window.invoiceTimer = new InvoiceTimer(
           {
             elSelector: '.invoice__progressBar',
             timestamp: countDownDate,
@@ -337,7 +335,7 @@
             },
           }
         );
-        invoiceTimer.run();
+        window.invoiceTimer.run();
       })();
 
 
@@ -346,12 +344,19 @@
         if (tx_urls) {
           try {
             txUrl = JSON.parse(tx_urls);
-            txUrl = typeof txUrl === 'string' ? txUrl : txUrl[txUrl.length-1]
+            if (txUrl) {
+              txUrl = typeof txUrl === 'string' ? txUrl : txUrl[txUrl.length-1];
+            }
           } catch (error) {
             console.error('Failed to parse tx_urls: ', error);
           }
         }
         return txUrl;
+      }
+
+      function finInvoiceChecking () {
+        clearTimeout(window.checkInvoiceInterval);
+        window.invoiceTimer.fin();
       }
 
       if (!window.checkInvoiceInterval){
@@ -365,22 +370,24 @@
             },
             error: function (error) {
               console.error('check invoice interval error: ', error);
-              clearTimeout(window.checkInvoiceInterval);
-              window.InvoiceTimer.fin();
+              finInvoiceChecking();
             },
             success: function (response) {
-              if (['new'].includes(response.status)
-                || ['pending'].includes(response.status) && Math.abs(response.pending_amount) < elInvoice.dataset.invoiceAmount) {
-                return;
+              if (!['new', 'pending'].includes(response.status)) {
+                finInvoiceChecking();
               }
-              clearTimeout(window.checkInvoiceInterval);
+              if (['new'].includes(response.status)
+                || ['pending'].includes(response.status) && response.pending_amount > 0)
+              {
+                return; // no re-render need.
+              }
               var resultContent = '';
               var txUrl = getTxUrl(response.tx_urls);
               if (['pending'].includes(response.status)) {
-                var confirmString =  response.expected_confirmations > 1 ? 'confirms' : 'confirm';
+                var confirmString = response.expected_confirmations > 1 ? 'confirmations' : 'confirmation';
                 resultContent += '<div class="invoice__result text-center">' +
                     '<i class="glyphicon glyphicon-refresh text-primary"></i>' +
-                    '<h3>Waiting for ' + response.confirmations + ' of ' + response.expected_confirmations + ' ' + confirmString + '</h3>' +
+                    '<h3>Waiting for ' + (Number(response.expected_confirmations)-Number(response.confirmations)) + ' of ' + response.expected_confirmations + ' ' + confirmString + '</h3>' +
                     '<p>Please, wait until network confirms your payment. It usually takes 15-60 minutes.</p>' +
                     '<a href="'+ txUrl + '" title="Check my transaction" target="_blank" rel="noopener"><i class="glyphicon glyphicon-share"></i>Check my transaction</a>' +
                   '</div>';
@@ -394,16 +401,16 @@
                 resultContent += '<div class="invoice__result text-center">' +
                     '<i class="glyphicon glyphicon-ok text-primary"></i>' +
                     '<h3>The order has been overpaid</h3>' +
-                    '<p>You have payed ' + Math.abs(response.pending_amount) + ' ' + response.currency + ', ' +
+                    '<p>You have payed ' + (Math.abs(response.pending_amount) + Number(response.amount)).toFixed(8) + ' ' + response.currency + ', ' +
                     'it is more than required sum. In case of inconvenience, please, contact store`s support.</p>' +
                     '<a href="'+ txUrl + '" title="Check my transaction" target="_blank" rel="noopener"><i class="glyphicon glyphicon-share"></i>Check my transaction</a>' +
                   '</div>';
               } else if (['expired', 'cancelled'].includes(response.status)) {
-                if (!!response.pending_amount) {
+                if (response.pending_amount < response.amount) {
                   resultContent += '<div class="invoice__result text-center">' +
                       '<i class="glyphicon glyphicon-repeat text-primary"></i>' +
                       '<h3>The order has not been fully paid</h3>' +
-                      '<p>We have received '+ response.pending_amount + ' ' + response.currency + ' of ' + elInvoice.dataset.invoiceAmount + ' '
+                      '<p>We have received '+ (response.amount - response.pending_amount).toFixed(8) + ' ' + response.currency + ' of ' + elInvoice.dataset.invoiceAmount + ' '
                       + elInvoice.dataset.invoiceCurrency + ' required. To get your payment back, please, contact store`s support.</p>' +
                     '</div>';
                 } else {
@@ -428,7 +435,7 @@
               }
             }
           });
-        }, 15*1000);
+        }, 30*1000);
       }
     });
 
