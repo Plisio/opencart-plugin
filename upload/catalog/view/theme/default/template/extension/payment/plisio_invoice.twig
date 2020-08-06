@@ -319,7 +319,9 @@
     document.addEventListener('DOMContentLoaded', function () {
       var elInvoice = document.querySelector('.invoice');
       var elProgressBar = elInvoice.querySelector('.invoice__progressBar');
-      var countDownDate = new Date(elProgressBar.dataset.expireUtc).getTime();
+      var expireUTC = new Date(elProgressBar.dataset.expireUtc);
+      var countDownDate = expireUTC.getTime() - expireUTC.getTimezoneOffset() * 60 * 1000;
+
       (function () {
         function InvoiceTimer(el, options) {
           Timer.apply(this, arguments);
@@ -442,7 +444,6 @@
         }, 15*1000);
       }
     });
-
 
     function copyInvoiceValue (el) {
       var textCopyTo = el.parentElement.querySelector('input');
