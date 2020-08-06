@@ -156,7 +156,8 @@ class ControllerExtensionPaymentPlisio extends Controller
                         $data['txUrl'] = $txUrl;
                     }
                 } catch (Exception $e) {
-                    return array(ErrorCode::$ParseXmlError, null);
+                    $this->log->write('Plisio error: '. $e->getMessage());
+                    return;
                 }
             }
         }
