@@ -387,6 +387,7 @@
               {
                 if (response.pending_amount < response.amount) {
                   elInvoice.querySelector('.invoice__pendingAmount').value = response.pending_amount;
+                  elInvoice.querySelector('.invoice__qr').setAttribute('src', response.qr_code);
                 }
                 return;
               }
