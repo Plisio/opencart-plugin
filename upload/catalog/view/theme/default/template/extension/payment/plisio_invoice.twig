@@ -171,7 +171,7 @@
               <span class="input-group-addon">{{ currency }}</span>
               <input
                 type="text"
-                class="form-control"
+                class="form-control invoice__pendingAmount"
                 value="{{ pending_amount }}"
                 readonly
                 onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Amount copied" data-trigger="click"
@@ -386,8 +386,7 @@
                 || ['pending'].includes(response.status) && response.pending_amount > 0)
               {
                 if (response.pending_amount < response.amount) {
-                  elInvoice.querySelector('.invoice__amountSum').innerHTML = '<strong>' + response.pending_amount + ' ' + response.currency +'</strong>' +
-                    '<br>' + (response.pending_amount/response.source_rate).toFixed(2) + ' ' + response.source_currency;
+                  elInvoice.querySelector('.invoice__pendingAmount').value = response.pending_amount;
                 }
                 return;
               }
