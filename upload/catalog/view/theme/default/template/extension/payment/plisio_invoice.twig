@@ -127,8 +127,8 @@
             <div class="col-xs-8 text-right">
               <div class="invoice__amount">
                 <div class="invoice__amountSum">
-                  <strong>{{ pending_amount }} {{ currency }}</strong> <br>
-                  {{ (pending_amount/source_rate)|number_format(2) }} {{ source_currency }}
+                  <strong>{{ amount }} {{ currency }}</strong> <br>
+                  {{ (amount/source_rate)|number_format(2) }} {{ source_currency }}
                 </div>
               </div>
             </div>
@@ -238,8 +238,8 @@
         } else {
           throw new ReferenceError("Invalid element selector passed");
         }
-        if (options.timestamp) {
-          this.countDownDate = new Date(options.timestamp);
+        if (options.countDownTimestamp) {
+          this.countDownTimestamp = options.countDownTimestamp;
         } else {
           throw new ReferenceError("Invalid timestamp");
         }
@@ -255,7 +255,7 @@
 
     Timer.prototype.calc = function () {
       this._now = new Date().getTime();
-      this._distance = this.countDownDate - this._now;
+      this._distance = this.countDownTimestamp - this._now;
       // this._dateToRender.days = Math.floor(this._distance / (1000 * 60 * 60 * 24));
       this._dateToRender.hours = Math.floor((this._distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       this._dateToRender.minutes = Math.floor((this._distance % (1000 * 60 * 60)) / (1000 * 60));
@@ -320,7 +320,11 @@
       var elInvoice = document.querySelector('.invoice');
       var elProgressBar = elInvoice.querySelector('.invoice__progressBar');
       var expireUTC = new Date(elProgressBar.dataset.expireUtc);
-      var countDownDate = expireUTC.getTime() - expireUTC.getTimezoneOffset() * 60 * 1000;
+      var countDownTimestamp = expireUTC.getTime() - expireUTC.getTimezoneOffset() * 60 * 1000;
+
+      // var now = new Date();
+      // var diff = countDownDate - now.getTime();
+
 
       (function () {
         function InvoiceTimer(el, options) {
@@ -331,7 +335,7 @@
         window.invoiceTimer = new InvoiceTimer(
           {
             elSelector: '.invoice__progressBar',
-            timestamp: countDownDate,
+            countDownTimestamp: countDownTimestamp,
             callback: function () {
               // console.info('Callback-function called after invoice timer finishes.')
             },
