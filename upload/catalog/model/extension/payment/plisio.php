@@ -24,7 +24,7 @@ class ModelExtensionPaymentPlisio extends Model
                     $keys = ['amount', 'pending_amount', 'wallet_hash', 'psys_cid', 'currency', 'status', 'expire_utc', 'qr_code', 'source_currency', 'source_rate', 'expected_confirmations'];
                     $queryArr = [];
                     foreach ($keys as $key) {
-                        if (isset($data[$key]) && !empty($data[$key])) {
+                        if (isset($data[$key])) {
                             $queryArr[] = "`$key`='" . $this->db->escape($data[$key]) . "'";
                         }
                     }
@@ -51,7 +51,7 @@ class ModelExtensionPaymentPlisio extends Model
                 $keys = ['pending_amount', 'status', 'qr_code', 'confirmations', 'tx_urls'];
                 $queryArr = [];
                 foreach ($keys as $key) {
-                    if (isset($data[$key]) && !empty($data[$key])) {
+                    if (isset($data[$key])) {
                         $queryArr[] = "`$key`='" . $this->db->escape($data[$key]) . "'";
                     }
                 }
