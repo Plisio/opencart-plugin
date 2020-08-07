@@ -393,8 +393,8 @@
     document.addEventListener('DOMContentLoaded', function () {
       var elInvoice = document.querySelector('.invoice');
       var elProgressBar = elInvoice.querySelector('.invoice__progressBar');
-      var expireUTC = new Date(elProgressBar.dataset.expireUtc);
-      var countDownTimestamp = expireUTC.getTime() - expireUTC.getTimezoneOffset() * 60 * 1000;
+      var expireUTC = new Date(parseInt(elProgressBar.dataset.expireUtc));
+      var countDownTimestamp = expireUTC.getTime();
 
       (function () {
         try {
