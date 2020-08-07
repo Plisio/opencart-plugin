@@ -185,8 +185,6 @@ class ControllerPaymentPlisio extends Controller
 
         $this->data = $data;
 
-        $this->data['heading_title'] = $this->language->get('text_checkout');
-
         $this->children = array(
             'common/column_left',
             'common/column_right',
