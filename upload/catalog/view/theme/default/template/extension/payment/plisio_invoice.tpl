@@ -154,7 +154,7 @@
                                 onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Hash copied" data-trigger="click"
                         >
                         <span class="input-group-addon btn btn-primary" onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Hash copied" data-trigger="click">
-                <i class="glyphicon glyphicon-duplicate invoice__btn_copy"></i>
+                <i class="glyphicon glyphicon-ok invoice__btn_copy"></i>
               </span>
                     </div>
                 </div>
@@ -177,7 +177,7 @@
                 <div class="invoice__result text-center">
                     <i class="glyphicon glyphicon-refresh text-primary"></i>
                     <?php $stringConfirm = $expected_confirmations > 1 ? 'confirmations' :  'confirmation' ?>
-                    <h3>Waiting for <?php echo $expected_confirmations-confirmations; ?> of <?php echo $expected_confirmations; ?> <?php echo $stringConfirm; ?></h3>
+                    <h3>Waiting for <?php echo $expected_confirmations - $confirmations; ?> of <?php echo $expected_confirmations; ?> <?php echo $stringConfirm; ?></h3>
                     <p>Please, wait until network confirms your payment. It usually takes 15-60 minutes.</p>
                     <a href="<?php echo $txUrl; ?>" title="Check my transaction" target="_blank" rel="noopener"><i class="glyphicon glyphicon-share"></i>Check my transaction</a>
                 </div>
