@@ -125,10 +125,11 @@ class ControllerExtensionPaymentPlisio extends Controller
     public function invoice()
     {
         $this->load->model('extension/payment/plisio');
-//        $this->load->model('checkout/order');
+        $this->load->language('extension/payment/plisio');
+
         $this->setupPlisioClient();
 
-        $orderId = $this->session->data['order_id'];
+        $orderId = isset($this->session->data['order_id']) ? $this->session->data['order_id'] : null;
 
         if (!$orderId){
             $this->response->redirect($this->url->link('common/home', '', true));
@@ -140,6 +141,25 @@ class ControllerExtensionPaymentPlisio extends Controller
         }
 
         $data = $plisioOrder;
+
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($data));
+            return;
+        }   else {
+            if (!empty($data['tx_urls'])) {
+                try {
+                    $txUrl = json_decode($data['tx_urls']);
+                    if (!empty($txUrl)) {
+                        $txUrl = gettype($txUrl) === 'string' ? $txUrl : $txUrl[count($txUrl) - 1];
+                        $data['txUrl'] = $txUrl;
+                    }
+                } catch (Exception $e) {
+                    $this->log->write('Plisio error: '. $e->getMessage());
+                    return;
+                }
+            }
+        }
 
         $invoiceId = $plisioOrder['plisio_invoice_id'];
         $plisioParsedUrl = parse_url($this->plisio->apiEndPoint);
