@@ -79,23 +79,6 @@
                         </td>
                     </tr>
 
-<?php /**
-                             <div class="form-group hidden">
-                               <label class="col-sm-2 control-label" for="input-order-status"><?php echo $entry_white_label; ?></label>
-                               <div class="col-sm-10">
-                                 <select name="plisio_white_label" id="input-white-label" class="form-control">
-                                 <?php foreach ($white_label_options as $white_label_key => $white_label_value ): ?>
-                                   <?php if ($white_label_key == $plisio_white_label): ?>
-                                     <option value="<?php echo $white_label_key; ?>" selected="selected"><?php echo $white_label_value; ?></option>
-                                    <?php else: ?>
-                                     <option value="<?php echo $white_label_key; ?>"><?php echo $white_label_value; ?></option>
-                                   <?php endif; ?>
-                                 <?php endforeach; ?>
-                                 </select>
-                               </div>
-                             </div>
-*/ ?>
-
 
                     <tr class="plisio-list-currencies">
                         <td><?= $entry_currency; ?> <br> <i><?= $entry_currency_hint ?></i></td>
