@@ -182,6 +182,10 @@ class ControllerExtensionPaymentPlisio extends Controller
             'href' => $this->url->link('checkout/checkout', '', true)
         );
 
+        if (isset($data['expire_utc'])){
+            $data['expire_utc'] = (new DateTime($data['expire_utc']))->getTimestamp()*1000;
+        }
+
         $data['footer'] = $this->load->controller('common/footer');
         $data['header'] = $this->load->controller('common/header');
         $this->response->setOutput($this->load->view('extension/payment/plisio_invoice', $data));
