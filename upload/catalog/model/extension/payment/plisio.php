@@ -2,9 +2,73 @@
 
 class ModelExtensionPaymentPlisio extends Model
 {
+    protected function validateRequiredData($data, $extra = [])
+    {
+        $required = array_merge(['order_id', 'plisio_invoice_id'], $extra);
+        $invalid = [];
+        foreach ($required as $item) {
+            if (!isset($data[$item]) || empty($data[$item])) {
+                $invalid[] = $item;
+            }
+        }
+        return $invalid;
+    }
+
     public function addOrder($data)
     {
-        $this->db->query("INSERT INTO `" . DB_PREFIX . "plisio_order` SET `order_id` = '" . (int)$data['order_id'] . "', `plisio_invoice_id` = '" . $this->db->escape($data['plisio_invoice_id']) . "'");
+        $invalid = $this->validateRequiredData($data);
+        if (count($invalid) === 0) {
+            $query = "INSERT INTO `" . DB_PREFIX . "plisio_order` SET `order_id` = '" . (int)$data['order_id'] . "', `plisio_invoice_id` = '" . $this->db->escape($data['plisio_invoice_id']) . "'";
+            if (isset($data['wallet_hash']) && !empty($data['wallet_hash'])) {
+                try {
+                    $keys = ['amount', 'pending_amount', 'wallet_hash', 'psys_cid', 'currency', 'status', 'expire_utc', 'qr_code', 'source_currency', 'source_rate', 'expected_confirmations'];
+                    $queryArr = [];
+                    foreach ($keys as $key) {
+                        if (isset($data[$key])) {
+                            $queryArr[] = "`$key`='" . $this->db->escape($data[$key]) . "'";
+                        }
+                    }
+                    if (!empty($queryArr)) {
+                        $query .= ', ' . implode(', ', $queryArr);
+                    }
+
+                    return $this->db->query($query);
+                } catch (Exception $e) {
+                    $this->log->write('Plisio::updateOrder exception: ' . $e->getMessage());
+                }
+            }
+        }
+        $this->log->write('Plisio::addOrder ' . implode(', ', $invalid) . ' fields are missing');
+        return false;
+    }
+
+    public function updateOrder($data)
+    {
+        $invalid = $this->validateRequiredData($data, ['wallet_hash']);
+        if (count($invalid) === 0) {
+            try {
+                $query = "UPDATE `" . DB_PREFIX . "plisio_order` SET ";
+                $keys = ['pending_amount', 'status', 'qr_code', 'confirmations', 'tx_urls'];
+                $queryArr = [];
+                foreach ($keys as $key) {
+                    if (isset($data[$key])) {
+                        $queryArr[] = "`$key`='" . $this->db->escape($data[$key]) . "'";
+                    }
+                }
+                if (!empty($queryArr)) {
+                    $query .= implode(', ', $queryArr);
+                }
+                $query .= " WHERE `order_id` = '" . (int)$data['order_id'] . "' AND `plisio_invoice_id` = '" . $this->db->escape($data['plisio_invoice_id']) . "'";
+                error_log($query);
+                return $this->db->query($query);
+            } catch (Exception $e){
+                $this->log->write('Plisio::updateOrder exception: ' . $e->getMessage());
+            }
+            return false;
+        }
+
+        $this->log->write('Plisio::updateOrder ' . implode(', ', $invalid) . ' fields are missing');
+        return false;
     }
 
     public function getOrder($order_id)
