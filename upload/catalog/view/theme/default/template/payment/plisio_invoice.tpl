@@ -268,7 +268,7 @@
                   <input
                     type="text"
                     class="form-control invoice__pendingAmount"
-                    value="<?php echo sprintf('%f', (float)$pending_amount); ?>"
+                    value="<?php echo (float)$pending_amount; ?>"
                     readonly
                     onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Amount copied" data-trigger="click"
                   >
