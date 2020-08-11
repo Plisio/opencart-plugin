@@ -169,6 +169,10 @@ class ControllerExtensionPaymentPlisio extends Controller
             $this->response->redirect($plisioInvoiceUrl);
         }
 
+        if (isset($data['expire_utc'])) {
+            $data['expire_utc'] = (new DateTime($data['expire_utc']))->getTimestamp()*1000;
+        }
+
         $data['breadcrumbs'] = array();
 
         $data['breadcrumbs'][] = array(
