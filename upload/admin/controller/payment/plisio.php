@@ -178,18 +178,18 @@ class ControllerPaymentPlisio extends Controller
         return !$this->error;
     }
 
-//
-//    public function install()
-//    {
-//        $this->load->model('extension/payment/plisio');
-//
-//        $this->model_extension_plisio->install();
-//    }
-//
-//    public function uninstall()
-//    {
-//        $this->load->model('extension/payment/plisio');
-//
-//        $this->model_extension_plisio->uninstall();
-//    }
+
+    public function install()
+    {
+        $this->load->model('payment/plisio');
+
+        $this->model_payment_plisio->install();
+    }
+
+    public function uninstall()
+    {
+        $this->load->model('payment/plisio');
+
+        $this->model_payment_plisio->uninstall();
+    }
 }
