@@ -98,14 +98,20 @@ class ControllerExtensionPaymentPlisio extends Controller
 
         $response = $this->plisio->createTransaction($request);
         if ($response && $response['status'] !== 'error' && !empty($response['data'])) {
-            $this->model_extension_payment_plisio->addOrder(array(
+            $orderData = array(
                 'order_id' => $order_info['order_id'],
                 'plisio_invoice_id' => $response['data']['txn_id']
-            ));
+            );
+            if (isset($response['data']) && isset($response['data']['wallet_hash']) && $this->verifyCallbackData($response['data'])){
+                $response['data']['expire_utc'] = date('Y-m-d H:i:s', $response['data']['expire_utc']);
+                $orderData = array_merge($orderData, $response['data']);
+            }
+
+            $this->model_extension_payment_plisio->addOrder($orderData);
 
             $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('plisio_order_status_id'));
             $this->cart->clear();
-            if ( $this->config->get('plisio_white_label') == 'false') {
+            if (!isset($orderData['wallet_hash']) || empty($orderData['wallet_hash'])) {
                 $this->response->redirect($response['data']['invoice_url']);
             } else {
                 $this->response->redirect($this->url->link('extension/payment/plisio/invoice', '', true));
@@ -119,26 +125,69 @@ class ControllerExtensionPaymentPlisio extends Controller
     public function invoice()
     {
         $this->load->model('extension/payment/plisio');
-//        $this->load->model('checkout/order');
+        $this->load->language('extension/payment/plisio');
+
         $this->setupPlisioClient();
 
-        $orderId = $this->session->data['order_id'];
+        $orderId = isset($this->session->data['order_id']) ? $this->session->data['order_id'] : null;
+
+        if (!$orderId){
+            $this->response->redirect($this->url->link('common/home', '', true));
+        }
+
         $plisioOrder = $this->model_extension_payment_plisio->getOrder($orderId);
+        if (!$plisioOrder){
+            $this->response->redirect($this->url->link('common/home', '', true));
+        }
+
+        $data = $plisioOrder;
+
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($data));
+            return;
+        }   else {
+            if (!empty($data['tx_urls'])) {
+                try {
+                    $txUrl = json_decode($data['tx_urls']);
+                    if (!empty($txUrl)) {
+                        $txUrl = gettype($txUrl) === 'string' ? $txUrl : $txUrl[count($txUrl) - 1];
+                        $data['txUrl'] = $txUrl;
+                    }
+                } catch (Exception $e) {
+                    $this->log->write('Plisio error: '. $e->getMessage());
+                    return;
+                }
+            }
+        }
+
         $invoiceId = $plisioOrder['plisio_invoice_id'];
         $plisioParsedUrl = parse_url($this->plisio->apiEndPoint);
         $plisioInvoiceUrl = $plisioParsedUrl['scheme'] . '://' . $plisioParsedUrl['host'] . '/invoice/' . $invoiceId;
 
-        if ( $this->config->get('plisio_white_label') == 'false'){
+        if (!isset($plisioOrder['wallet_hash'])){
             $this->response->redirect($plisioInvoiceUrl);
         }
 
-        $data = [
-            'invoice_id' => $invoiceId,
-            'invoice_url' => $plisioInvoiceUrl
-        ];
+        if (isset($data['expire_utc'])) {
+            $data['expire_utc'] = (new DateTime($data['expire_utc']))->getTimestamp()*1000;
+        }
+
+        $data['breadcrumbs'] = array();
+
+        $data['breadcrumbs'][] = array(
+            'text' => $this->language->get('text_home'),
+            'href' => $this->url->link('common/home')
+        );
+
+        $data['breadcrumbs'][] = array(
+            'text' => $this->language->get('text_checkout'),
+            'href' => $this->url->link('checkout/checkout', '', true)
+        );
 
         $data['footer'] = $this->load->controller('common/footer');
         $data['header'] = $this->load->controller('common/header');
+
         $this->response->setOutput($this->load->view('extension/payment/plisio_invoice', $data));
     }
 
@@ -165,18 +214,23 @@ class ControllerExtensionPaymentPlisio extends Controller
         }
     }
 
-    private function verifyCallbackData()
+    private function verifyCallbackData($data)
     {
-        if (!isset($this->request->post['verify_hash'])) {
-            $this->log->write('Callback data has no verify hash');
+        if (!isset($data['verify_hash'])) {
             return false;
         }
         $this->load->model('setting/setting');
 
-        $post = $this->request->post;
+        $post = $data;
         $verifyHash = $post['verify_hash'];
         unset($post['verify_hash']);
         ksort($post);
+        if (isset($post['expire_utc'])){
+            $post['expire_utc'] = (string)$post['expire_utc'];
+        }
+        if (isset($post['tx_urls'])){
+            $post['tx_urls'] = html_entity_decode($post['tx_urls']);
+        }
         $postString = serialize($post);
         $checkKey = hash_hmac('sha1', $postString,  $this->config->get('plisio_api_secret_key'));
         if ($checkKey != $verifyHash) {
@@ -190,7 +244,7 @@ class ControllerExtensionPaymentPlisio extends Controller
 
     public function callback()
     {
-        if ($this->verifyCallbackData()) {
+        if ($this->verifyCallbackData($this->request->post)) {
             $this->load->model('checkout/order');
             $this->load->model('extension/payment/plisio');
 
@@ -198,10 +252,20 @@ class ControllerExtensionPaymentPlisio extends Controller
             $order_info = $this->model_checkout_order->getOrder($order_id);
             $ext_order = $this->model_extension_payment_plisio->getOrder($order_id);
 
+            $data = $this->request->post;
 
             if (!empty($order_info) && !empty($ext_order)) {
+                if (isset($ext_order['amount']) && !empty($ext_order['amount'])) {
+                    $data['plisio_invoice_id'] = $data['txn_id'];
+                    $data['order_id'] = $order_id;
+                    if (isset($data['tx_urls'])){
+                        $data['tx_urls'] = html_entity_decode($data['tx_urls']);
+                    }
+                    $this->model_extension_payment_plisio->updateOrder($data);
+                }
+
                 if ($ext_order) {
-                    switch ($this->request->post['status']) {
+                    switch ($data['status']) {
                         case 'completed':
                             $cg_order_status = 'plisio_paid_status_id';
                             break;
@@ -215,7 +279,7 @@ class ControllerExtensionPaymentPlisio extends Controller
                             $cg_order_status = 'plisio_canceled_status_id';
                             break;
                         case 'expired':
-                            if ($this->request->post['source_amount'] > 0) {
+                            if ($data['source_amount'] > 0) {
                                 $cg_order_status = 'plisio_invalid_status_id';
                             } else {
                                 $cg_order_status = 'plisio_canceled_status_id';
@@ -230,8 +294,8 @@ class ControllerExtensionPaymentPlisio extends Controller
 
                     if (!is_null($cg_order_status)) {
                         $comment = '';
-                        if (isset($this->request->post['comment']) && !empty($this->request->post['comment'])) {
-                            $comment = $this->request->post['comment'];
+                        if (isset($data['comment']) && !empty($data['comment'])) {
+                            $comment = $data['comment'];
                         }
                         $this->model_checkout_order->addOrderHistory($order_id, $this->config->get($cg_order_status), $comment/*, true*/);
                     }
