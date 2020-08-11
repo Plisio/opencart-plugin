@@ -72,20 +72,14 @@
                         </div>
 
 
-                        <div class="form-group hidden">
+                        <div class="form-group">
                             <label class="col-sm-2 control-label"
-                                   for="input-order-status"><?php echo $entry_white_label; ?></label>
+                                   for="input-sort-order"><?php echo $entry_sort_order; ?></label>
                             <div class="col-sm-10">
-                                <select name="plisio_white_label" id="input-white-label" class="form-control">
-                                    <?php foreach ($white_label_options as $white_label_key => $white_label_value): ?>
-                                    <?php if ($white_label_key == $plisio_white_label):  ?>
-                                    <option value="<?php echo $white_label_key; ?>"
-                                            selected="selected"><?php echo $white_label_value; ?></option>
-                                    <?php else:  ?>
-                                    <option value="<?php echo $white_label_key; ?>"><?php echo $white_label_value; ?></option>
-                                    <?php endif;  ?>
-                                    <?php endforeach;  ?>
-                                </select>
+                                <input type="text" name="plisio_sort_order"
+                                       value="<?php echo $plisio_sort_order; ?>"
+                                       placeholder="<?php echo $entry_sort_order; ?>" id="input-sort-order"
+                                       class="form-control"/>
                             </div>
                         </div>
 
