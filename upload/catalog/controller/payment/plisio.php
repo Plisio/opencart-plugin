@@ -87,7 +87,7 @@ class ControllerPaymentPlisio extends Controller
             'currency' => $this->request->post['currency'],
             'order_name' => $this->config->get('config_meta_title') . ' Order #' . $order_info['order_id'],
             'order_number' => $order_info['order_id'],
-            'description' => join($description, ', '),
+            'description' => implode(', ', $description),
             'cancel_url' => $this->url->link('payment/plisio/callback', '', 'SSL'),
             'callback_url' => $this->url->link('payment/plisio/callback', '', 'SSL'),
             'success_url' => $this->url->link('payment/plisio/success', '', 'SSL'),
