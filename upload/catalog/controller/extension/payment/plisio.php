@@ -130,7 +130,7 @@ class ControllerExtensionPaymentPlisio extends Controller
 //        $this->load->model('checkout/order');
         $this->setupPlisioClient();
 
-        $orderId = $this->session->data['order_id'];
+        $orderId = isset($this->session->data['order_id']) ? $this->session->data['order_id'] : null;
 
         if (!$orderId){
             $this->response->redirect($this->url->link('common/home', '', true));
