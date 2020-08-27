@@ -37,8 +37,9 @@ class ModelPaymentPlisio extends Model
                     $this->log->write('Plisio::updateOrder exception: ' . $e->getMessage());
                 }
             }
+        } else {
+            $this->log->write('Plisio::addOrder ' . implode(', ', $invalid) . ' fields are missing');
         }
-        $this->log->write('Plisio::addOrder ' . implode(', ', $invalid) . ' fields are missing');
         return false;
     }
 
@@ -59,15 +60,15 @@ class ModelPaymentPlisio extends Model
                     $query .= implode(', ', $queryArr);
                 }
                 $query .= " WHERE `order_id` = '" . (int)$data['order_id'] . "' AND `plisio_invoice_id` = '" . $this->db->escape($data['plisio_invoice_id']) . "'";
-                error_log($query);
+
                 return $this->db->query($query);
-            } catch (Exception $e){
+            } catch (Exception $e) {
                 $this->log->write('Plisio::updateOrder exception: ' . $e->getMessage());
             }
             return false;
+        } else {
+            $this->log->write('Plisio::updateOrder ' . implode(', ', $invalid) . ' fields are missing');
         }
-
-        $this->log->write('Plisio::updateOrder ' . implode(', ', $invalid) . ' fields are missing');
         return false;
     }
 
