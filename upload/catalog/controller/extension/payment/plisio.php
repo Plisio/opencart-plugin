@@ -3,7 +3,6 @@
 require_once(DIR_SYSTEM . 'library/plisio/PlisioClient.php');
 require_once(DIR_SYSTEM . 'library/plisio/version.php');
 
-
 class ControllerExtensionPaymentPlisio extends Controller
 {
     /** @var PlisioClient */
@@ -17,6 +16,8 @@ class ControllerExtensionPaymentPlisio extends Controller
         $this->setupPlisioClient();
 
         $currencies = $this->plisio->getCurrencies();
+        $shop = $this->plisio->getShopInfo();
+        $data['white_label'] = isset($shop['data']['white_label']) ? $shop['data']['white_label'] : false;
         $data['currencies'] = $currencies['data'];
         $selectedCurrencies = $this->model_setting_setting->getSettingValue('payment_plisio_receive_currencies');
         $selectedCurrencies = str_replace(['"', '[', ']'], '', $selectedCurrencies);
@@ -102,12 +103,16 @@ class ControllerExtensionPaymentPlisio extends Controller
                 'order_id' => $order_info['order_id'],
                 'plisio_invoice_id' => $response['data']['txn_id']
             );
-            if (isset($response['data']) && isset($response['data']['wallet_hash']) && $this->verifyCallbackData($response['data'])){
-                $response['data']['expire_utc'] = date('Y-m-d H:i:s', $response['data']['expire_utc']);
-                $orderData = array_merge($orderData, $response['data']);
-            }
 
-            $this->model_extension_payment_plisio->addOrder($orderData);
+            if (isset($response['data']) && isset($response['data']['wallet_hash'])){
+                if ($this->verifyCallbackData($response['data'])) {
+                    $response['data']['expire_utc'] = date('Y-m-d H:i:s', $response['data']['expire_utc']);
+                    $orderData = array_merge($orderData, $response['data']);
+                    $this->model_extension_payment_plisio->addOrder($orderData);
+                } else {
+                    $this->log->write('Plisio response looks suspicious. Skip adding order');
+                }
+            }
 
             $this->model_checkout_order->addOrderHistory($order_info['order_id'], $this->config->get('payment_plisio_order_status_id'));
             $this->cart->clear();
@@ -127,7 +132,6 @@ class ControllerExtensionPaymentPlisio extends Controller
 
         $this->load->language('extension/payment/plisio');
         $this->load->model('extension/payment/plisio');
-//        $this->load->model('checkout/order');
         $this->setupPlisioClient();
 
         $orderId = isset($this->session->data['order_id']) ? $this->session->data['order_id'] : null;
@@ -254,7 +258,7 @@ class ControllerExtensionPaymentPlisio extends Controller
             $data = $this->request->post;
 
             if (!empty($order_info) && !empty($ext_order)) {
-                if (isset($ext_order['amount']) && !empty($ext_order['amount'])) {
+                if (isset($ext_order['wallet_hash']) && !empty($ext_order['wallet_hash'])) {
                     $data['plisio_invoice_id'] = $data['txn_id'];
                     $data['order_id'] = $order_id;
                     if (isset($data['tx_urls'])){
@@ -299,9 +303,12 @@ class ControllerExtensionPaymentPlisio extends Controller
                         $this->model_checkout_order->addOrderHistory($order_id, $this->config->get($cg_order_status), $comment/*, true*/);
                     }
                 }
+            } else {
+                $this->log->write('Plisio order with id '. $order_id . ' not found');
             }
             $this->response->addHeader('HTTP/1.1 200 OK');
         } else {
+            $this->log->write('Plisio response looks suspicious. Skip updating order');
             $this->response->addHeader('HTTP/1.1 400 Bad Request');
         }
     }
