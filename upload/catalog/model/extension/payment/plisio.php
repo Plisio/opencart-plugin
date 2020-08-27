@@ -19,26 +19,28 @@ class ModelExtensionPaymentPlisio extends Model
         $invalid = $this->validateRequiredData($data);
         if (count($invalid) === 0) {
             $query = "INSERT INTO `" . DB_PREFIX . "plisio_order` SET `order_id` = '" . (int)$data['order_id'] . "', `plisio_invoice_id` = '" . $this->db->escape($data['plisio_invoice_id']) . "'";
-            if (isset($data['wallet_hash']) && !empty($data['wallet_hash'])) {
+
                 try {
-                    $keys = ['amount', 'pending_amount', 'wallet_hash', 'psys_cid', 'currency', 'status', 'expire_utc', 'qr_code', 'source_currency', 'source_rate', 'expected_confirmations'];
-                    $queryArr = [];
-                    foreach ($keys as $key) {
-                        if (isset($data[$key])) {
-                            $queryArr[] = "`$key`='" . $this->db->escape($data[$key]) . "'";
+                    if (isset($data['wallet_hash']) && !empty($data['wallet_hash'])) {
+                        $keys = ['amount', 'pending_amount', 'wallet_hash', 'psys_cid', 'currency', 'status', 'expire_utc', 'qr_code', 'source_currency', 'source_rate', 'expected_confirmations'];
+                        $queryArr = [];
+                        foreach ($keys as $key) {
+                            if (isset($data[$key])) {
+                                $queryArr[] = "`$key`='" . $this->db->escape($data[$key]) . "'";
+                            }
                         }
-                    }
-                    if (!empty($queryArr)) {
-                        $query .= ', ' . implode(', ', $queryArr);
+                        if (!empty($queryArr)) {
+                            $query .= ', ' . implode(', ', $queryArr);
+                        }
                     }
 
                     return $this->db->query($query);
                 } catch (Exception $e) {
-                    $this->log->write('Plisio::updateOrder exception: ' . $e->getMessage());
+                    $this->log->write('Plisio::addOrder exception: ' . $e->getMessage());
                 }
-            }
+        } else {
+            $this->log->write('Plisio::addOrder ' . implode(', ', $invalid) . ' fields are missing');
         }
-        $this->log->write('Plisio::addOrder ' . implode(', ', $invalid) . ' fields are missing');
         return false;
     }
 
@@ -47,7 +49,6 @@ class ModelExtensionPaymentPlisio extends Model
         $invalid = $this->validateRequiredData($data, ['wallet_hash']);
         if (count($invalid) === 0) {
             try {
-                $query = "UPDATE `" . DB_PREFIX . "plisio_order` SET ";
                 $keys = ['pending_amount', 'status', 'qr_code', 'confirmations', 'tx_urls'];
                 $queryArr = [];
                 foreach ($keys as $key) {
@@ -56,18 +57,18 @@ class ModelExtensionPaymentPlisio extends Model
                     }
                 }
                 if (!empty($queryArr)) {
+                    $query = "UPDATE `" . DB_PREFIX . "plisio_order` SET ";
                     $query .= implode(', ', $queryArr);
+                    $query .= " WHERE `order_id` = '" . (int)$data['order_id'] . "' AND `plisio_invoice_id` = '" . $this->db->escape($data['plisio_invoice_id']) . "'";
+                    return $this->db->query($query);
                 }
-                $query .= " WHERE `order_id` = '" . (int)$data['order_id'] . "' AND `plisio_invoice_id` = '" . $this->db->escape($data['plisio_invoice_id']) . "'";
-                error_log($query);
-                return $this->db->query($query);
-            } catch (Exception $e){
+
+            } catch (Exception $e) {
                 $this->log->write('Plisio::updateOrder exception: ' . $e->getMessage());
             }
-            return false;
+        } else {
+            $this->log->write('Plisio::updateOrder ' . implode(', ', $invalid) . ' fields are missing');
         }
-
-        $this->log->write('Plisio::updateOrder ' . implode(', ', $invalid) . ' fields are missing');
         return false;
     }
 
