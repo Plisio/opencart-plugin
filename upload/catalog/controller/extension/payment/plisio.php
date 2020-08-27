@@ -311,6 +311,7 @@ class ControllerExtensionPaymentPlisio extends Controller
             }
             $this->response->addHeader('HTTP/1.1 200 OK');
         } else {
+            $this->log->write('Plisio response looks suspicious. Skip updating order');
             $this->response->addHeader('HTTP/1.1 400 Bad Request');
         }
     }
