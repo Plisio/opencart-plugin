@@ -13,7 +13,7 @@
         </div>
         <div class="buttons">
             <div class="col-sm-2 pull-right">
-                <input type="submit" value="<?php echo $button_confirm; ?>" class="btn btn-primary"/>
+                <input type="submit" value="<?php echo $white_label ? $button_confirm_white_label : $button_confirm; ?>" class="btn btn-primary"/>
             </div>
         </div>
     </div>
