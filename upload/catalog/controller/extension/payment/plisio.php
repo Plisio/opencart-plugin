@@ -80,11 +80,13 @@ class ControllerExtensionPaymentPlisio extends Controller
         }
 
         $amount = $order_info['total'] * $this->currency->getvalue($order_info['currency_code']);
+        $siteTitle = is_array($this->config->get('config_meta_title')) ? implode(',', $this->config->get('config_meta_title')) : $this->config->get('config_meta_title');
+        $orderName = $siteTitle . ' Order #' . $order_info['order_id'];
         $request = array(
             'source_amount' => number_format($amount, 8, '.', ''),
             'source_currency' => $order_info['currency_code'],
             'currency' => $this->request->post['currency'],
-            'order_name' => $this->config->get('config_meta_title') . ' Order #' . $order_info['order_id'],
+            'order_name' => $orderName,
             'order_number' => $order_info['order_id'],
             'description' => implode(',', $description),
             'cancel_url' => $this->url->link('extension/payment/plisio/callback', '', true),
@@ -253,12 +255,12 @@ class ControllerExtensionPaymentPlisio extends Controller
 
             $order_id = $this->request->post['order_number'];
             $order_info = $this->model_checkout_order->getOrder($order_id);
-            $ext_order = $this->model_extension_payment_plisio->getOrder($order_id);
 
             $data = $this->request->post;
 
-            if (!empty($order_info) && !empty($ext_order)) {
-                if (isset($ext_order['wallet_hash']) && !empty($ext_order['wallet_hash'])) {
+            if (!empty($order_info)) {
+                $ext_order = $this->model_extension_payment_plisio->getOrder($order_id);
+                if (!empty($ext_order) && isset($ext_order['wallet_hash']) && !empty($ext_order['wallet_hash'])) {
                     $data['plisio_invoice_id'] = $data['txn_id'];
                     $data['order_id'] = $order_id;
                     if (isset($data['tx_urls'])){
@@ -267,41 +269,39 @@ class ControllerExtensionPaymentPlisio extends Controller
                     $this->model_extension_payment_plisio->updateOrder($data);
                 }
 
-                if ($ext_order) {
-                    switch ($data['status']) {
-                        case 'completed':
-                            $cg_order_status = 'payment_plisio_paid_status_id';
-                            break;
-                        case 'confirming':
-                            $cg_order_status = 'payment_plisio_confirming_status_id';
-                            break;
-                        case 'error':
+                switch ($data['status']) {
+                    case 'completed':
+                        $cg_order_status = 'payment_plisio_paid_status_id';
+                        break;
+                    case 'confirming':
+                        $cg_order_status = 'payment_plisio_confirming_status_id';
+                        break;
+                    case 'error':
+                        $cg_order_status = 'payment_plisio_invalid_status_id';
+                        break;
+                    case 'cancelled':
+                        $cg_order_status = 'payment_plisio_canceled_status_id';
+                        break;
+                    case 'expired':
+                        if ($data['source_amount'] > 0) {
                             $cg_order_status = 'payment_plisio_invalid_status_id';
-                            break;
-                        case 'cancelled':
+                        } else {
                             $cg_order_status = 'payment_plisio_canceled_status_id';
-                            break;
-                        case 'expired':
-                            if ($data['source_amount'] > 0) {
-                                $cg_order_status = 'payment_plisio_invalid_status_id';
-                            } else {
-                                $cg_order_status = 'payment_plisio_canceled_status_id';
-                            }
-                            break;
-                        case 'mismatch':
-                            $cg_order_status = 'payment_plisio_changeback_status_id';
-                            break;
-                        default:
-                            $cg_order_status = NULL;
-                    }
-
-                    if (!is_null($cg_order_status)) {
-                        $comment = '';
-                        if (isset($data['comment']) && !empty($data['comment'])) {
-                            $comment = $data['comment'];
                         }
-                        $this->model_checkout_order->addOrderHistory($order_id, $this->config->get($cg_order_status), $comment/*, true*/);
+                        break;
+                    case 'mismatch':
+                        $cg_order_status = 'payment_plisio_changeback_status_id';
+                        break;
+                    default:
+                        $cg_order_status = NULL;
+                }
+
+                if (!is_null($cg_order_status)) {
+                    $comment = '';
+                    if (isset($data['comment']) && !empty($data['comment'])) {
+                        $comment = $data['comment'];
                     }
+                    $this->model_checkout_order->addOrderHistory($order_id, $this->config->get($cg_order_status), $comment/*, true*/);
                 }
             } else {
                 $this->log->write('Plisio order with id '. $order_id . ' not found');
