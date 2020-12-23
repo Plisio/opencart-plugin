@@ -1,4 +1,8 @@
 <style>
+  .invoice__header {
+    padding: 8px 0 0;
+  }
+
   .invoice__amount {
     display: flex;
     align-items: center;
@@ -24,6 +28,87 @@
     text-align: center;
     text-shadow: 0 0 1px #000;
     color: #fff;
+  }
+
+  .invoice__content {
+    padding: 16px 0 40px;
+  }
+
+  .invoice__currencyRow {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .invoice__currencyItem {
+    width: 100%;
+    max-width: 50%;
+    min-width: 200px;
+    padding: 0 8px 16px;
+  }
+
+  .invoice__input_radioLabel {
+    position: relative;
+    display: block;
+    margin: 0;
+    cursor: pointer;
+  }
+  .invoice__input_radioLabel._disabled {
+    opacity: .7;
+    cursor: not-allowed;
+  }
+
+  .invoice__input_radio {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .invoice__input_radioBtn {
+    display: block;
+  }
+
+  .invoice__currencyContent {
+     display: flex;
+     align-items: center;
+     padding: .75em .5em .75em 1em;
+     border-radius: 8px;
+     background: #fff;
+     box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+     transition: all .5s;
+  }
+
+  .invoice__currencyContent:hover .invoice__currencyName ,
+  .invoice__currencyContent:focus .invoice__currencyName ,
+  .invoice__currencyContent._checked .invoice__currencyName {
+    color: #229ac8;
+  }
+
+  .invoice__currencyIcon {
+    max-width: 100%;
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .invoice__currencyHint {
+    margin-left: .5em;
+    text-align: left;
+  }
+
+  .invoice__currencyName {
+    font-size: 1.125em;
+    font-weight: 700;
+    transition: color .5s;
+  }
+
+  .invoice__currencyAmount {
+    display: block;
+    margin-top: .25em;
+    font-size: 1em;
+    font-weight: 400;
   }
 
   .invoice__qr {
@@ -137,7 +222,6 @@
     </symbol>
   </defs>
 </svg>
-
 <div class="container">
   {% if breadcrumbs %}
     <ul class="breadcrumb">
@@ -153,6 +237,18 @@
     </ul>
   {% endif %}
 </div>
+
+{% set invoice_is_currency_awaiting = allowed_currencies|length > 1 and status in ['new'] %}
+{% set invoice_is_min_sum_in_error = allowed_currencies|length == 1 and amount < allowed_currencies[currency].min_sum_in %}
+{% set invoice_is_processing = invoice_is_min_sum_in_error != true and status in ['new', 'pending'] %}
+{% set invoice_is_payment_waiting = status in ['new'] or (status in ['pending'] and pending_amount > 0) %}
+{% set invoice_is_waiting_for_confirmations = status in ['pending'] and pending_amount <= 0 %}
+{% set invoice_is_overpaid = status in ['mismatch'] %}
+{% set invoice_is_finished = status in ['finish', 'completed'] %}
+{% set invoice_is_expired = status in ['expired', 'cancelled'] %}
+{% set invoice_is_underpaid = invoice_is_expired and pending_amount < amount %}
+{% set invoice_is_error = status in ['error'] %}
+
 <div class="invoice__wrapper container">
   <div class="row">
     <div
@@ -160,39 +256,112 @@
       data-invoice-id="{{ plisio_invoice_id }}"
       data-invoice-amount="{{ amount }}"
       data-invoice-currency="{{ currency }}"
+      data-order-id="{{ order_id }}"
     >
-      {% if status in ['new', 'pending'] %}
-        <div class="invoice__progress progress">
-          <div
-            class="invoice__progressBar progress-bar"
-            role="progressbar"
-            aria-valuenow="0"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            style="width: 0"
-            data-expire-utc="{{ expire_utc }}"
-          >
-            <span class="sr-only">0% Complete</span>
-          </div>
-          <span class="invoice__progressHint"></span>
-        </div>
-      {% endif %}
-
-      <div class="invoice__content">
-        {% if status in ['new'] or (status in ['pending'] and pending_amount > 0)  %}
-          <div class="row">
-            <div class="col-xs-4">
-              <h4><small>Order #</small>{{ order_id }}</h4>
+      <div class="invoice__header">
+        {% if invoice_is_processing %}
+          {# invoice-progressbar #}
+          <div class="invoice__progress progress">
+            <div
+              class="invoice__progressBar progress-bar"
+              role="progressbar"
+              aria-valuenow="0"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              style="width: 0"
+              data-expire-utc="{{ expire_utc }}"
+            >
+              <span class="sr-only">0% {{ text_progress_hint }}</span>
             </div>
-            <div class="col-xs-8 text-right">
-              <div class="invoice__amount">
-                <div class="invoice__amountSum">
-                  <strong>{{ amount }} {{ currency }}</strong> <br>
-                  {{ (amount/source_rate)|number_format(2) }} {{ source_currency }}
-                </div>
+            <span class="invoice__progressHint"></span>
+          </div>
+        {% endif %}
+        {# invoice-info #}
+        <div class="row">
+          <div class="col-xs-4">
+            <h4><small>{{ text_info_order }}</small>{{ order_id }}</h4>
+          </div>
+          <div class="col-xs-8 text-right">
+            <div class="invoice__amount">
+              <div class="invoice__amountSum">
+                <strong class="invoice__amountSum_crypto">{{ amount|number_format(8, '.', ' ') }} {{ currency }}</strong> <br>
+                {{ (amount/source_rate)|number_format(2) }} {{ source_currency }}
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div class="invoice__content">
+        {# invoice-step-currencies #}
+        {% if invoice_is_currency_awaiting %}
+        <div class="text-center">
+          <h3>{{ text_step_currency_title }}</h3>
+          <p>{{ text_step_currency_hint }}</p>
+
+          <div class="invoice__currencyRow">
+          {% for key, allowed_curr in allowed_currencies %}
+            {% if allowed_curr.cid == currency %}
+              {% set currencyAmount = amount %}
+            {% elseif commission_payment == 1 %}
+              {% set currencyAmount = amount / source_rate * allowed_curr.fiat_rate %}
+            {% elseif commission_payment == 2 %}
+              {% set currencyAmount = (checkout_total_fiat + (checkout_total_fiat * (allowed_curr.invoice_commission_percentage + extra_commission) / 100)) * allowed_curr.fiat_rate %}
+            {% endif %}
+            <div class="invoice__currencyItem">
+              <label class="invoice__input_radioLabel
+                {{ currencyAmount < allowed_curr.min_sum_in
+                  ? ' _disabled data-toggle="tooltip" title="'~text_step_error_hint_1~' '~text_step_error_hint_2|format(allowed_curr.min_sum_in~' '~allowed_curr.currency)~'" data-trigger="hover"'
+                  : ''
+                }}
+              ">
+                <input
+                  type="radio"
+                  name="currency"
+                  class="invoice__input_radio"
+                  value="{{ allowed_curr.cid }}"
+                  onclick="window.invoiceChooseCurrency('{{ allowed_curr.cid }}', {{ currencyAmount }})"
+                  {{ currencyAmount < allowed_curr.min_sum_in ? ' disabled' : '' }}
+
+                >
+                <span class="invoice__input_radioBtn">
+                <span class="invoice__currencyContent{{ currency == allowed_curr.cid ? ' _checked' : '' }}">
+                  <img
+                    class="invoice__currencyIcon"
+                    src="/catalog/view/theme/default/image/payment/{{ allowed_curr.currency }}.svg"
+                    alt="{{ allowed_curr.currency }}"
+                    width="32"
+                    height="32"
+                  >
+                  <span class="invoice__currencyHint">
+                    <span class="invoice__currencyName">{{ allowed_curr.currency }}</span>
+                    <span class="invoice__currencyAmount">
+                      {{ currencyAmount|number_format(8, '.', ' ') }}
+                    </span>
+                  </span>
+                </span>
+              </span>
+              </label>
+            </div>
+          {% endfor %}
+          </div>
+        </div>
+
+        {# min_sum_error #}
+        {% elseif invoice_is_min_sum_in_error %}
+          <div class="invoice__result text-center">
+            <svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg">
+              <use xlink:href="#icon_invoice_exclamation"></use>
+            </svg>
+            <h3>{{ text_step_error_title }}</h3>
+            <p>{{ text_step_error_hint_1 }}
+              <br>
+              {{ text_step_error_hint_2|format(allowed_currencies[currency].min_sum_in ~ ' ' ~ currency) }}
+            </p>
+          </div>
+
+        {# invoice-step-pay #}
+        {% elseif invoice_is_payment_waiting %}
           <div class="text-center">
             <img
               class="invoice__qr"
@@ -202,13 +371,13 @@
               height="160"
             >
           </div>
-          <p class="invoice__hint text-center text-large">Send the indicated amount to the address below:</p>
+          <p class="invoice__hint text-center text-large">{{ text_step_pay_hint }}</p>
           <div class="form-group">
             <div class="input-group">
               <span class="input-group-addon">
                 <img
                   class="invoice__psysImg"
-                  src="{{ 'https://plisio.net/img/psys-icon/' ~ currency ~ '.svg' }}"
+                  src="{{ '/catalog/view/theme/default/image/payment/' ~ currency ~ '.svg' }}"
                   alt="{{ currency }}"
                   width="16"
                   height="16"
@@ -219,9 +388,9 @@
                 class="form-control"
                 value="{{ wallet_hash }}"
                 readonly
-                onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Hash copied" data-trigger="click"
+                onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="{{ text_hash_copied }}" data-trigger="click"
               >
-              <span class="input-group-addon btn btn-primary" onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Hash copied" data-trigger="click">
+              <span class="input-group-addon btn btn-primary" onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="{{ text_hash_copied }}" data-trigger="click">
                 <svg class="invoice__icon_btn invoice__icon_btn_copy" xmlns="http://www.w3.org/2000/svg">
                   <use xlink:href="#icon_invoice_copy"></use>
                 </svg>
@@ -234,93 +403,100 @@
               <input
                 type="text"
                 class="form-control invoice__pendingAmount"
-                value="{{ pending_amount }}"
+                value="{{ pending_amount|number_format(8, '.', '') }}"
                 readonly
-                onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Amount copied" data-trigger="click"
+                onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="{{ text_amount_copied }}" data-trigger="click"
               >
-              <span class="input-group-addon btn btn-primary" onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="Amount copied" data-trigger="click">
+              <span class="input-group-addon btn btn-primary" onclick="copyInvoiceValue(this)" data-toggle="tooltip" title="{{ text_amount_copied }}" data-trigger="click">
                 <svg class="invoice__icon_btn invoice__icon_btn_copy" xmlns="http://www.w3.org/2000/svg">
                   <use xlink:href="#icon_invoice_copy"></use>
                 </svg>
               </span>
             </div>
           </div>
-        {% elseif status in ['pending'] and pending_amount <= 0 %}
+        {# invoice-step-pending #}
+        {% elseif invoice_is_waiting_for_confirmations %}
           <div class="invoice__result text-center">
             <svg class="invoice__icon_status _loader" xmlns="http://www.w3.org/2000/svg">
               <use xlink:href="#icon_invoice_loader"></use>
             </svg>
-            {% set stringConfirm = expected_confirmations > 1 ? 'confirmations' :  'confirmation' %}
-            <h3>Waiting for {{ expected_confirmations-confirmations }} of {{ expected_confirmations }} {{ stringConfirm }}</h3>
-            <p>Please, wait until network confirms your payment. It usually takes 15-60 minutes.</p>
-            <a href="{{ txUrl }}" title="Check my transaction" target="_blank" rel="noopener">
+            {% if (expected_confirmations|number_format - confirmations|number_format > 0) %}
+              {% set stringConfirm = expected_confirmations|number_format > 1 ? 'confirmations' :  'confirmation' %}
+              <h3>{{ text_step_pending_title|format((expected_confirmations|number_format - confirmations|number_format), expected_confirmations|number_format, stringConfirm) }}</h3>
+            {% endif %}
+            <p>{{ text_step_pending_hint }}</p>
+            <a href="{{ txUrl }}" title="{{ text_link_external }}" target="_blank" rel="noopener">
               <svg class="invoice__icon_btn" xmlns="http://www.w3.org/2000/svg">
                 <use xlink:href="#icon_invoice_link_external"></use>
               </svg>
-              Check my transaction
+              {{ text_link_external }}
             </a>
           </div>
-        {% elseif status in ['finish', 'completed'] %}
+        {# invoice-step-finished #}
+        {% elseif invoice_is_finished %}
           <div class="invoice__result text-center">
             <svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg">
               <use xlink:href="#icon_invoice_check"></use>
             </svg>
-            <h3>Payment complete</h3>
-            <a href="{{ txUrl }}" title="Check my transaction" target="_blank" rel="noopener">
+            <h3>{{ text_step_finished_title }}</h3>
+            <a href="{{ txUrl }}" title="{{ text_link_external }}" target="_blank" rel="noopener">
               <svg class="invoice__icon_btn" xmlns="http://www.w3.org/2000/svg">
                 <use xlink:href="#icon_invoice_link_external"></use>
               </svg>
-              Check my transaction
+              {{ text_link_external }}
             </a>
           </div>
-        {% elseif status in ['mismatch'] %}
+        {# invoice-step-overpaid #}
+        {% elseif invoice_is_overpaid %}
           <div class="invoice__result text-center">
             <svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg">
               <use xlink:href="#icon_invoice_overpaid"></use>
             </svg>
-            <h3>The order has been overpaid</h3>
-            <p>You have payed {{ amount + pending_amount * (-1) }} {{ currency }},
-              it is more than required sum. In case of inconvenience, please, contact store`s support.</p>
-              <a href="{{ txUrl }}" title="Check my transaction" target="_blank" rel="noopener">
-                <svg class="invoice__icon_btn" xmlns="http://www.w3.org/2000/svg">
-                  <use xlink:href="#icon_invoice_link_external"></use>
-                </svg>
-                Check my transaction
-              </a>
+            <h3>{{ text_step_overpaid_title }}</h3>
+            <p>{{ text_step_overpaid_hint|format((amount + pending_amount|abs) ~ ' ' ~ currency) }}</p>
+            <a href="{{ txUrl }}" title="{{ text_link_external }}" target="_blank" rel="noopener">
+              <svg class="invoice__icon_btn" xmlns="http://www.w3.org/2000/svg">
+                <use xlink:href="#icon_invoice_link_external"></use>
+              </svg>
+              {{ text_link_external }}
+            </a>
           </div>
-        {% elseif status in ['expired', 'cancelled'] %}
-          {% if pending_amount < amount %}
-            <div class="invoice__result text-center">
-              <svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg">
-                <use xlink:href="#icon_invoice_expired"></use>
-              </svg>
-              <h3>The order has not been fully paid</h3>
-              <p>We have received  {{ amount - pending_amount }} {{ currency }} of {{ amount }}  {{ currency }} required.
-                To get your payment back, please, contact store`s support.</p>
-            </div>
-          {% else %}
-            <div class="invoice__result text-center">
-              <svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg">
-                <use xlink:href="#icon_invoice_expired"></use>
-              </svg>
-              <h3>The order has expired</h3>
-              <p>Please, <a href="/" title="go back">go back</a> and create a new one.</p>
-            </div>
-          {% endif %}
+        {# invoice-step-underpaid #}
+        {% elseif invoice_is_underpaid %}
+          <div class="invoice__result text-center">
+            <svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg">
+              <use xlink:href="#icon_invoice_expired"></use>
+            </svg>
+            <h3>{{ text_step_underpaid_title }}</h3>
+            <p>{{ text_step_underpaid_hint|format((amount - pending_amount) ~ ' ' ~ currency, amount ~ ' ' ~ currency ) }}</p>
+          </div>
+        {# invoice-step-expired #}
+        {% elseif invoice_is_expired %}
+          <div class="invoice__result text-center">
+            <svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg">
+              <use xlink:href="#icon_invoice_expired"></use>
+            </svg>
+            <h3>{{ text_step_expired_title }}</h3>
+            <p>{{ text_step_expired_hint_1 }}
+              <a href="/" title="{{ text_link_go_back }}">{{ text_link_go_back }}</a>
+              {{ text_step_expired_hint_2 }}
+            </p>
+          </div>
+        {# invoice-step-error #}
         {% else %}
           <div class="invoice__result text-center">
             <svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg">
               <use xlink:href="#icon_invoice_exclamation"></use>
             </svg>
-            <h3>Ooops...</h3>
-            <p>Something went wrong with this operation. Please, contact store`s support, so we could figure this out.</p>
+            <h3>{{ text_step_error_title }}</h3>
+            <p>{{ text_step_error_hint_default }}</p>
           </div>
         {% endif %}
       </div>
   </div>
 </div>
 
-{% if status in ['new', 'pending'] %}
+{% if invoice_is_processing %}
   <script async defer>
     function Timer(options) {
       if (Object.keys(options).length > 0) {
@@ -483,72 +659,135 @@
                   }
                   return;
                 }
-                var resultContent = '';
                 var txUrl = getTxUrl(response.tx_urls);
                 if (['pending'].includes(response.status)) {
-                  var confirmString = response.expected_confirmations > 1 ? 'confirmations' : 'confirmation';
-                  resultContent += '<div class="invoice__result text-center">' +
-                      '<svg class="invoice__icon_status _loader" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_loader"></use></svg>' +
-                      '<h3>Waiting for ' + (Number(response.expected_confirmations)-Number(response.confirmations)) + ' of ' + response.expected_confirmations + ' ' + confirmString + '</h3>' +
-                      '<p>Please, wait until network confirms your payment. It usually takes 15-60 minutes.</p>' +
-                      '<a href="'+ txUrl + '" title="Check my transaction" target="_blank" rel="noopener">' +
-                      '<svg class="invoice__icon_btn" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_link_external"></use></svg>' +
-                      'Check my transaction</a>' +
-                    '</div>';
+                  window.renderInvoiceStepPending(elInvoice, response, txUrl);
                 } else if (['finish', 'completed'].includes(response.status)) {
-                  resultContent += '<div class="invoice__result text-center">' +
-                      '<svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_check"></use></svg>' +
-                      '<h3>Payment complete</h3>' +
-                      '<a href="'+ txUrl + '" title="Check my transaction" target="_blank" rel="noopener">' +
-                      '<svg class="invoice__icon_btn" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_link_external"></use></svg>' +
-                      'Check my transaction</a>' +
-                    '</div>';
+                  window.renderInvoiceStepFinished(elInvoice, txUrl);
                 } else if (['mismatch'].includes(response.status)) {
-                  resultContent += '<div class="invoice__result text-center">' +
-                      '<svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_overpaid"></use></svg>' +
-                      '<h3>The order has been overpaid</h3>' +
-                      '<p>You have payed ' + (Math.abs(response.pending_amount) + Number(response.amount)).toFixed(8) + ' ' + response.currency + ', ' +
-                      'it is more than required sum. In case of inconvenience, please, contact store`s support.</p>' +
-                      '<a href="'+ txUrl + '" title="Check my transaction" target="_blank" rel="noopener">' +
-                      '<svg class="invoice__icon_btn" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_link_external"></use></svg>' +
-                      'Check my transaction</a>' +
-                    '</div>';
+                  window.renderInvoiceStepOverpaid(elInvoice, response, txUrl);
                 } else if (['expired', 'cancelled'].includes(response.status)) {
                   if (response.pending_amount < response.amount) {
-                    resultContent += '<div class="invoice__result text-center">' +
-                        '<svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_expired"></use></svg>' +
-                        '<h3>The order has not been fully paid</h3>' +
-                        '<p>We have received '+ (response.amount - response.pending_amount).toFixed(8) + ' ' + response.currency + ' of ' + elInvoice.dataset.invoiceAmount + ' '
-                        + elInvoice.dataset.invoiceCurrency + ' required. To get your payment back, please, contact store`s support.</p>' +
-                      '</div>';
+                    window.renderInvoiceStepUnderpaid(elInvoice, response);
                   } else {
-                    resultContent += '<div class="invoice__result text-center">' +
-                        '<svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_expired"></use></svg>' +
-                        '<h3>The order has expired</h3>' +
-                        '<p>Please, <a href="/" title="go back">go back</a> and create a new one.</p>' +
-                      '</div>';
+                    window.renderInvoiceStepExpired(elInvoice);
                   }
                 } else if (['error'].includes(response.status)) {
-                  resultContent += '<div class="invoice__result text-center">' +
-                      '<svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_exclamation"></use></svg>' +
-                      '<h3>Ooops...</h3>' +
-                      '<p>Something went wrong with this operation. Please, contact store`s support, so we could figure this out.</p>' +
-                    '</div>';
                   console.error('error');
-                }
-                if (['pending'].includes(response.status)) {
-                  elInvoice.querySelector('.invoice__content').innerHTML = resultContent;
-                } else {
-                  elInvoice.innerHTML = resultContent;
+                  window.renderInvoiceStepError(elInvoice);
                 }
               } catch (error) {
                 console.error('Failed to parse server response ', error);
+                window.renderInvoiceStepError(elInvoice);
               }
             }
           });
         }, 15*1000);
       }
     });
+
+    function invoiceChooseCurrency (currency, newAmount) {
+      var elInvoice = document.querySelector('.invoice');
+      elInvoice.querySelector('.invoice__content').innerHTML = '<div class="invoice__result text-center">' +
+        '<svg class="invoice__icon_status _loader" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_loader"></use></svg>' +
+      '</div>';
+      elInvoice.querySelector('.invoice__amountSum_crypto').textContent = Number(newAmount).toFixed(8) + ' ' + currency;
+      jQuery.ajax({
+        type: 'POST',
+        url: '/index.php?route=extension/payment/plisio/choose-currency',
+        dataType: 'json',
+        data: {
+          invoice: elInvoice.dataset.invoiceId,
+          order_id: elInvoice.dataset.orderId,
+          currency: currency,
+        },
+        error: function (error) {
+          console.error('change invoice currency failed: ', error);
+          window.renderInvoiceStepError(elInvoice);
+        },
+        success: function (response) {
+          if (response.redirect) {
+            location.href = response.redirect;
+          }   else {
+            console.log('Error occurred.', response);
+            window.renderInvoiceStepError(elInvoice);
+          }
+        }
+      });
+    }
+
+    function renderInvoiceStepPending (elInvoice, response, txUrl) {
+      var confirmString = response.expected_confirmations > 1 ? 'confirmations' : 'confirmation';
+      var title = '{{ text_step_pending_title }}'
+        .replace('%s', (Number(response.expected_confirmations)-Number(response.confirmations)))
+        .replace('%s', response.expected_confirmations)
+        .replace('%s', confirmString);
+      var str = '';
+      str += '<div class="invoice__result text-center">' +
+        '<svg class="invoice__icon_status _loader" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_loader"></use></svg>';
+      if (Number(response.expected_confirmations)-Number(response.confirmations) > 0) {
+        str += '<h3>' + title + '</h3>';
+      }
+      str += '<p>{{ text_step_pending_hint }}</p>' +
+        '<a href="'+ txUrl + '" title="{{ text_link_external }}" target="_blank" rel="noopener">' +
+        '<svg class="invoice__icon_btn" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_link_external"></use></svg>' +
+        '{{ text_link_external }}</a>' +
+      '</div>';
+      elInvoice.querySelector('.invoice__content').innerHTML = str;
+    }
+
+    function renderInvoiceStepFinished (elInvoice, txUrl) {
+      elInvoice.querySelector('.invoice__content').innerHTML = '<div class="invoice__result text-center">' +
+        '<svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_check"></use></svg>' +
+        '<h3>{{ text_step_finished_title }}</h3>' +
+        '<a href="'+ txUrl + '" title="{{ text_link_external }}" target="_blank" rel="noopener">' +
+        '<svg class="invoice__icon_btn" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_link_external"></use></svg>' +
+        '{{ text_link_external }}</a>' +
+      '</div>';
+    }
+
+    function renderInvoiceStepOverpaid (elInvoice, response, txUrl) {
+      var hint = '{{ text_step_overpaid_hint }}'
+        .replace('%s', (Math.abs(response.pending_amount) + Number(response.amount)).toFixed(8) + ' ' + response.currency + ', ');
+      elInvoice.querySelector('.invoice__content').innerHTML = '<div class="invoice__result text-center">' +
+        '<svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_overpaid"></use></svg>' +
+        '<h3>{{ text_step_overpaid_title }}</h3>' +
+        '<p>' + hint + '</p>' +
+        '<a href="'+ txUrl + '" title="{{ text_link_external }}" target="_blank" rel="noopener">' +
+        '<svg class="invoice__icon_btn" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_link_external"></use></svg>' +
+        '{{ text_link_external }}</a>' +
+      '</div>';
+    }
+
+    function renderInvoiceStepUnderpaid (elInvoice, response) {
+      var hint = '{{ text_step_underpaid_hint }}'
+        .replace('%s', (response.amount - response.pending_amount).toFixed(8) + ' ' + response.currency)
+        .replace('%s', elInvoice.dataset.invoiceAmount + ' ' + elInvoice.dataset.invoiceCurrency);
+      elInvoice.querySelector('.invoice__content').innerHTML = '<div class="invoice__result text-center">' +
+        '<svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg"><use xlink:href="#icon_invoice_expired"></use></svg>' +
+        '<h3>{{ text_step_underpaid_title }}</h3>' +
+        '<p>' + hint + '</p>' +
+      '</div>';
+    }
+
+    function renderInvoiceStepExpired (elInvoice) {
+      elInvoice.querySelector('.invoice__content').innerHTML = '<div class="invoice__result text-center">' +
+        '<svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg">' +
+          '<use xlink:href="#icon_invoice_expired"></use></svg>' +
+        '<h3>{{ text_step_expired_title }}</h3>' +
+        '<p>{{ text_step_expired_hint_1 }} <a href="/" title="{{ text_link_go_back }}">{{ text_link_go_back }}</a> {{ text_step_expired_hint_2 }}</p>' +
+      '</div>';
+    }
+
+    function renderInvoiceStepError (elInvoice) {
+      elInvoice.querySelector('.invoice__content').innerHTML = '<div class="invoice__result text-center">'+
+        '<svg class="invoice__icon_status" xmlns="http://www.w3.org/2000/svg">' +
+          '<use xlink:href="#icon_invoice_exclamation"></use>' +
+        '</svg>'+
+        '<h3>{{ text_step_error_title }}</h3>'+
+        '<p>{{ text_step_error_hint_default }}</p>'+
+      '</div>';
+    }
 
     function copyInvoiceValue (el) {
       var textCopyTo = el.parentElement.querySelector('input');

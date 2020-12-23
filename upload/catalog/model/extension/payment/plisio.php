@@ -72,6 +72,35 @@ class ModelExtensionPaymentPlisio extends Model
         return false;
     }
 
+    public function setNewCurrency($data) {
+        $invalid = $this->validateRequiredData($data, ['wallet_hash']);
+        if (count($invalid) === 0) {
+            try {
+                $keys = ['amount', 'pending_amount', 'wallet_hash', 'status', 'psys_cid', 'currency','qr_code', 'expire_utc', 'qr_code', 'source_currency', 'source_rate', 'expected_confirmations', 'tx_urls'];
+                $queryArr = [];
+                foreach ($keys as $key) {
+                    if (isset($data[$key])) {
+                        $queryArr[] = "`$key`='" . $this->db->escape($data[$key]) . "'";
+                    }
+                }
+                $queryArr[] = "plisio_invoice_id='" . $this->db->escape($data['txn_id']) . "'";
+                if (!empty($queryArr)) {
+                    $query = "UPDATE `" . DB_PREFIX . "plisio_order` SET ";
+                    $query .= implode(', ', $queryArr);
+                    $query .= " WHERE `order_id` = '" . (int)$data['order_id'] . "' AND `plisio_invoice_id` = '" . $this->db->escape($data['plisio_invoice_id']) . "'";
+                    return $this->db->query($query);
+                }
+
+            } catch (Exception $e) {
+                $this->log->write('Plisio::setNewCurrency exception: ' . $e->getMessage());
+            }
+        } else {
+            $this->log->write('Plisio::setNewCurrency ' . implode(', ', $invalid) . ' fields are missing');
+        }
+        return false;
+
+    }
+
     public function getOrder($order_id)
     {
         $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "plisio_order` WHERE `order_id` = '" . (int)$order_id . "' LIMIT 1");
