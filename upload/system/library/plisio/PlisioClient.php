@@ -5,7 +5,6 @@ class PlisioClient
     protected $secretKey = '';
     public $apiEndPoint = 'https://plisio.net/api/v1';
 
-
     public function __construct($secretKey)
     {
         $this->secretKey = $secretKey;
@@ -26,9 +25,9 @@ class PlisioClient
         return $this->apiCall('shops');
     }
 
-    public function getCurrencies()
+    public function getCurrencies($source_currency = 'USD')
     {
-        return $this->guestApiCall('currencies');
+        return $this->guestApiCall('currencies/' . $source_currency);
     }
 
     public function createTransaction($req)
@@ -119,7 +118,6 @@ class PlisioClient
             $ch = curl_init();
             curl_setopt_array($ch, $this->getCurlOptions($apiUrl));
             $data = curl_exec($ch);
-
             if ($data !== FALSE) {
                 $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
                 $body = substr($data, $header_size);

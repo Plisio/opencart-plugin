@@ -7,7 +7,41 @@ class ControllerExtensionPaymentPlisio extends Controller
 {
     /** @var PlisioClient */
     private $plisio;
-    private $plisio_receive_currencies = array();
+
+    private function get_plisio_receive_currencies ($source_currency) {
+        $currencies = $this->plisio->getCurrencies($source_currency);
+        $selectedCurrencies = $this->model_setting_setting->getSettingValue('payment_plisio_receive_currencies');
+
+        if (!empty($selectedCurrencies)) {
+            $selectedCurrencies = json_decode($selectedCurrencies);
+            if (!is_array($selectedCurrencies)) $selectedCurrencies = [$selectedCurrencies];
+        }
+
+        if (count($selectedCurrencies) > 0) {
+            $currencies = array_filter($currencies['data'], function ($i) use ($selectedCurrencies) {
+                return in_array($i['cid'], $selectedCurrencies);
+            });
+        }
+
+        usort($currencies, function($a, $b) use ($selectedCurrencies) {
+            $idxA = array_search($a['cid'], $selectedCurrencies);
+            $idxB = array_search($b['cid'], $selectedCurrencies);
+
+            $idxA = $idxA === false ? -1 : $idxA;
+            $idxB = $idxB === false ? -1 : $idxB;
+
+            if ($idxA < 0 && $idxB < 0) return -1;
+            if ($idxA < 0 && $idxB >= 0) return 1;
+            if ($idxA >= 0 && $idxB < 0) return -1;
+            return $idxA - $idxB;
+        });
+
+        $currencies = array_reduce($currencies, function ($acc, $curr) {
+            $acc[$curr['cid']] = $curr;
+            return $acc;
+        }, []);
+        return $currencies;
+    }
 
     public function index()
     {
@@ -15,46 +49,10 @@ class ControllerExtensionPaymentPlisio extends Controller
         $this->load->model('checkout/order');
         $this->setupPlisioClient();
 
-        $currencies = $this->plisio->getCurrencies();
         $shop = $this->plisio->getShopInfo();
+        $data = [];
         $data['white_label'] = isset($shop['data']['white_label']) ? $shop['data']['white_label'] : false;
-        $data['currencies'] = $currencies['data'];
-        $selectedCurrencies = $this->model_setting_setting->getSettingValue('payment_plisio_receive_currencies');
-        $selectedCurrencies = str_replace(['"', '[', ']'], '', $selectedCurrencies);
-        $selectedCurrencies = explode(',', $selectedCurrencies);
-        if (!is_array($selectedCurrencies)) $selectedCurrencies = [$selectedCurrencies];
 
-        if (count($selectedCurrencies) > 0) {
-            $data['currencies'] = array_filter($currencies['data'], function ($i) use ($selectedCurrencies) {
-                return in_array($i['cid'], $selectedCurrencies);
-            });
-
-            if (!empty($data['currencies'])) {
-                $data['currencies'] = array_values($data['currencies']);
-            }
-
-
-            $this->plisio_receive_currencies = $selectedCurrencies;
-            usort($data['currencies'], function($a, $b) {
-                $idxA = array_search($a['cid'], $this->plisio_receive_currencies);
-                $idxB = array_search($b['cid'], $this->plisio_receive_currencies);
-
-                $idxA = $idxA === false ? -1 : $idxA;
-                $idxB = $idxB === false ? -1 : $idxB;
-
-                if ($idxA < 0 && $idxB < 0) return -1;
-                if ($idxA < 0 && $idxB >= 0) return 1;
-                if ($idxA >= 0 && $idxB < 0) return -1;
-                return $idxA - $idxB;
-            });
-
-
-            if (is_array($data['currencies']) && count($data['currencies']) == 1) {
-                $buttonCaption = sprintf($this->language->get('button_currency_confirm'), $data['currencies'][0]['name'] . ' (' . $data['currencies'][0]['currency'] . ')');
-                $data['pay_with_text'] = $buttonCaption;
-                $data['button_confirm'] = $buttonCaption;
-            }
-        }
         if (!isset($data['button_confirm'])) {
             $data['button_confirm'] = $this->language->get('button_confirm');
         }
@@ -73,6 +71,10 @@ class ControllerExtensionPaymentPlisio extends Controller
         $orderId = $this->session->data['order_id'];
         $order_info = $this->model_checkout_order->getOrder($orderId);
 
+        $this->session->data['invoice_currency_set'] = false;
+        $plisio_receive_currencies = $this->get_plisio_receive_currencies($order_info['currency_code']);
+        $plisio_receive_cids = array_keys($plisio_receive_currencies);
+
         $description = [];
 
         foreach ($this->cart->getProducts() as $product) {
@@ -80,12 +82,33 @@ class ControllerExtensionPaymentPlisio extends Controller
         }
 
         $amount = $order_info['total'] * $this->currency->getvalue($order_info['currency_code']);
+        // min_sum check:
+        $defaultSelectedCurrency = reset($plisio_receive_currencies);
+        if (!empty($plisio_receive_currencies)
+            && $defaultSelectedCurrency['min_sum_in'] > $amount * $defaultSelectedCurrency['fiat_rate']
+        ) {
+            $this->load->language('extension/payment/plisio');
+            $data = [
+                'allowed_currencies' => [$defaultSelectedCurrency['currency'] => $defaultSelectedCurrency],
+                'amount' => $amount * $defaultSelectedCurrency['fiat_rate'],
+                'currency' =>  $defaultSelectedCurrency['currency'],
+                'source_rate' =>  $defaultSelectedCurrency['fiat_rate'],
+                'source_currency' =>  $defaultSelectedCurrency['fiat'],
+                'order_id' =>  $order_info['order_id'],
+            ];
+            $data['footer'] = $this->load->controller('common/footer');
+            $data['header'] = $this->load->controller('common/header');
+            $this->response->setOutput($this->load->view('extension/payment/plisio_invoice', $data));
+            return;
+        }
+
         $siteTitle = is_array($this->config->get('config_meta_title')) ? implode(',', $this->config->get('config_meta_title')) : $this->config->get('config_meta_title');
         $orderName = $siteTitle . ' Order #' . $order_info['order_id'];
         $request = array(
             'source_amount' => number_format($amount, 8, '.', ''),
             'source_currency' => $order_info['currency_code'],
-            'currency' => $this->request->post['currency'],
+            'currency' => $plisio_receive_cids[0],
+            'allowed_psys_cids' => implode(',', $plisio_receive_cids),
             'order_name' => $orderName,
             'order_number' => $order_info['order_id'],
             'description' => implode(',', $description),
@@ -129,9 +152,72 @@ class ControllerExtensionPaymentPlisio extends Controller
         }
     }
 
+    public function chooseCurrency ()   // white-label only
+    {
+        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest') {
+            $this->response->redirect($this->url->link('common/home', '', true));
+        }
+        $this->response->addHeader('Content-Type: application/json');
+
+        $this->load->model('checkout/order');
+        $this->load->language('extension/payment/plisio');
+        $this->load->model('extension/payment/plisio');
+        $this->setupPlisioClient();
+
+        $plisio_order = $this->model_extension_payment_plisio->getOrder($this->request->post['order_id']);
+        $order_info = $this->model_checkout_order->getOrder($this->request->post['order_id']);
+
+        $siteTitle = is_array($this->config->get('config_meta_title'))
+            ? implode(',', $this->config->get('config_meta_title'))
+            : $this->config->get('config_meta_title');
+        $orderName = $siteTitle . ' Order #' . $plisio_order['order_id'];
+
+        $request = array(
+            'invoice' => $this->request->post['invoice'],
+            'source_amount' => floatval($order_info['total']),
+            'source_currency' => $plisio_order['source_currency'],
+            'currency' => $this->request->post['currency'],
+            'allowed_psys_cids' => $this->request->post['currency'],
+            'order_number' => $this->request->post['order_id'],
+            'order_name' => $orderName,
+            'cancel_url' => $this->url->link('extension/payment/plisio/callback', '', true),
+            'callback_url' => $this->url->link('extension/payment/plisio/callback', '', true),
+            'success_url' => $this->url->link('extension/payment/plisio/success', '', true),
+            'email' => $order_info['email'],
+            'language' => $this->language->get('code'),
+            'plugin' => 'opencart',
+            'version' => PLISIO_OPENCART_EXTENSION_VERSION
+        );
+
+        $response = $this->plisio->createTransaction($request);
+        if ($response && $response['status'] !== 'error' && !empty($response['data'])) {
+            if (isset($response['data']['wallet_hash'])){
+                if ($this->verifyCallbackData($response['data'])) {
+                    $response['data']['expire_utc'] = date('Y-m-d H:i:s', $response['data']['expire_utc']);
+                    $orderData = array_merge([
+                        'order_id' => $plisio_order['order_id'],
+                        'plisio_invoice_id' => $this->request->post['invoice']
+                    ], $response['data']);
+                    if ($this->model_extension_payment_plisio->setNewCurrency($orderData)) {
+                        $this->session->data['invoice_currency_set'] = true;
+                        $this->response->setOutput(json_encode([
+                            'redirect' => $this->url->link('extension/payment/plisio/invoice')
+                        ]));
+                    }   else {
+                        return false;
+                    }
+                }
+            } else {
+                $this->log->write('Plisio response looks suspicious. Skip adding order');
+            }
+
+        }
+
+    }
+
     public function invoice()
     {
-
+        $this->load->model('checkout/order');
         $this->load->language('extension/payment/plisio');
         $this->load->model('extension/payment/plisio');
         $this->setupPlisioClient();
@@ -148,6 +234,24 @@ class ControllerExtensionPaymentPlisio extends Controller
         }
 
         $data = $plisioOrder;
+        $data['allowed_currencies'] = [];
+        if (!isset($this->session->data['invoice_currency_set']) || $this->session->data['invoice_currency_set'] !== true) {
+            $selectedCurrencies = $this->get_plisio_receive_currencies($plisioOrder['source_currency']);
+            $data['allowed_currencies'] = $selectedCurrencies;
+        }
+
+        $order_info = $this->model_checkout_order->getOrder($orderId);
+        if (empty($order_info)) {
+            $this->response->redirect($this->url->link('common/home', '', true));
+        }
+        $data['checkout_total_fiat'] = floatval($order_info['total']);
+
+        $shopInfo = $this->plisio->getShopInfo();
+        if (empty($shopInfo) || empty($shopInfo['data']) || !isset($shopInfo['data']['extra_commission']) || !isset($shopInfo['data']['commission_payment'])) {
+            $this->response->redirect($this->url->link('common/home', '', true));
+        }
+        $data['extra_commission'] = $shopInfo['data']['extra_commission'];
+        $data['commission_payment'] = $shopInfo['data']['commission_payment'];
 
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
             $this->response->addHeader('Content-Type: application/json');
