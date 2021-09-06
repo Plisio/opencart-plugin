@@ -1,6 +1,6 @@
 <?php
 
-class ModelExtensionPaymentPlisio extends Model
+class ModelPaymentPlisio extends Model
 {
     protected function validateRequiredData($data, $extra = [])
     {
@@ -20,24 +20,24 @@ class ModelExtensionPaymentPlisio extends Model
         if (count($invalid) === 0) {
             $query = "INSERT INTO `" . DB_PREFIX . "plisio_order` SET `order_id` = '" . (int)$data['order_id'] . "', `plisio_invoice_id` = '" . $this->db->escape($data['plisio_invoice_id']) . "'";
 
-                try {
-                    if (isset($data['wallet_hash']) && !empty($data['wallet_hash'])) {
-                        $keys = ['amount', 'pending_amount', 'wallet_hash', 'psys_cid', 'currency', 'status', 'expire_utc', 'qr_code', 'source_currency', 'source_rate', 'expected_confirmations'];
-                        $queryArr = [];
-                        foreach ($keys as $key) {
-                            if (isset($data[$key])) {
-                                $queryArr[] = "`$key`='" . $this->db->escape($data[$key]) . "'";
-                            }
-                        }
-                        if (!empty($queryArr)) {
-                            $query .= ', ' . implode(', ', $queryArr);
+            try {
+                if (isset($data['wallet_hash']) && !empty($data['wallet_hash'])) {
+                    $keys = ['amount', 'pending_amount', 'wallet_hash', 'psys_cid', 'currency', 'status', 'expire_utc', 'qr_code', 'source_currency', 'source_rate', 'expected_confirmations'];
+                    $queryArr = [];
+                    foreach ($keys as $key) {
+                        if (isset($data[$key])) {
+                            $queryArr[] = "`$key`='" . $this->db->escape($data[$key]) . "'";
                         }
                     }
-
-                    return $this->db->query($query);
-                } catch (Exception $e) {
-                    $this->log->write('Plisio::addOrder exception: ' . $e->getMessage());
+                    if (!empty($queryArr)) {
+                        $query .= ', ' . implode(', ', $queryArr);
+                    }
                 }
+
+                return $this->db->query($query);
+            } catch (Exception $e) {
+                $this->log->write('Plisio::addOrder exception: ' . $e->getMessage());
+            }
         } else {
             $this->log->write('Plisio::addOrder ' . implode(', ', $invalid) . ' fields are missing');
         }
@@ -110,14 +110,14 @@ class ModelExtensionPaymentPlisio extends Model
 
     public function getMethod($address, $total)
     {
-        $this->load->language('extension/payment/plisio');
+        $this->load->language('payment/plisio');
 
 
         $method_data = array(
             'code' => 'plisio',
             'title' => $this->language->get('text_title'),
             'terms' => '',
-            'sort_order' => $this->config->get('payment_plisio_sort_order')
+            'sort_order' => $this->config->get('plisio_sort_order')
         );
 
         return $method_data;

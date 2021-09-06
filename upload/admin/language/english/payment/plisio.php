@@ -2,7 +2,7 @@
 
 $_['heading_title'] = 'Plisio';
 
-$_['text_extension'] = 'Extensions';
+$_['text_payment'] = 'Payment';
 $_['text_success'] = 'Plisio payment details have been successfully updated.';
 $_['text_test_mode_on'] = 'On';
 $_['text_test_mode_off'] = 'Off';
@@ -12,8 +12,9 @@ $_['entry_test_mode'] = 'Test Mode';
 $_['entry_api_secret_key'] = 'API Secret Key';
 $_['entry_sort_order'] = 'Sort Order';
 $_['entry_white_label'] = 'White label processing';
-$_['entry_currency'] = 'Cryptocurrency <br><em>(You can change the order by drag and drop, the first one would be the default one)</em>';
-$_['entry_currency_receive_all'] = 'Check/uncheck all';
+$_['entry_currency'] = 'Cryptocurrency';
+$_['entry_currency_hint'] = '(Drag & drop list items to sort currencies)';
+$_['entry_currency_receive_all'] = 'Any';
 $_['entry_order_status'] = 'Order Status';
 $_['entry_pending_status'] = 'Pending Status';
 $_['entry_confirming_status'] = 'Confirming Status';
