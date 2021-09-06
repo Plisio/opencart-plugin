@@ -27,7 +27,10 @@ class PlisioClient
 
     public function getCurrencies($source_currency = 'USD')
     {
-        return $this->guestApiCall('currencies/' . $source_currency);
+        $currencies = $this->guestApiCall("currencies/$source_currency");
+        return array_filter($currencies['data'], function ($currency) {
+            return $currency['hidden'] == 0;
+        });
     }
 
     public function createTransaction($req)
@@ -114,7 +117,6 @@ class PlisioClient
 
         try {
             $apiUrl = $this->getApiUrl($cmd . $queryString);
-
             $ch = curl_init();
             curl_setopt_array($ch, $this->getCurlOptions($apiUrl));
             $data = curl_exec($ch);

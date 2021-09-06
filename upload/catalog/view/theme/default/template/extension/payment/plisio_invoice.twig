@@ -328,7 +328,7 @@
                 <span class="invoice__currencyContent{{ currency == allowed_curr.cid ? ' _checked' : '' }}">
                   <img
                     class="invoice__currencyIcon"
-                    src="/catalog/view/theme/default/image/payment/{{ allowed_curr.currency }}.svg"
+                    src="https://plisio.net/img/psys-icon/{{ allowed_curr.currency }}.svg"
                     alt="{{ allowed_curr.currency }}"
                     width="32"
                     height="32"
@@ -377,7 +377,7 @@
               <span class="input-group-addon">
                 <img
                   class="invoice__psysImg"
-                  src="{{ '/catalog/view/theme/default/image/payment/' ~ currency ~ '.svg' }}"
+                  src="{{ 'https://plisio.net/img/psys-icon/' ~ currency ~ '.svg' }}"
                   alt="{{ currency }}"
                   width="16"
                   height="16"
@@ -494,6 +494,7 @@
         {% endif %}
       </div>
   </div>
+</div>
 </div>
 
 {% if invoice_is_processing %}
@@ -708,7 +709,7 @@
         success: function (response) {
           if (response.redirect) {
             location.href = response.redirect;
-          }   else {
+          }  else {
             console.log('Error occurred.', response);
             window.renderInvoiceStepError(elInvoice);
           }
