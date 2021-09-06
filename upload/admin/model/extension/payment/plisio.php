@@ -34,19 +34,20 @@ class ModelExtensionPaymentPlisio extends Model
 
         $defaults = array();
 
-        $defaults['payment_plisio_receive_currencies'] = '';
-        $defaults['payment_plisio_white_label'] = false;
-        $defaults['payment_plisio_order_status_id'] = 1;
-        $defaults['payment_plisio_pending_status_id'] = 1;
-        $defaults['payment_plisio_confirming_status_id'] = 1;
-        $defaults['payment_plisio_paid_status_id'] = 5;
-        $defaults['payment_plisio_invalid_status_id'] = 10;
-        $defaults['payment_plisio_changeback_status_id'] = 13;
-        $defaults['payment_plisio_expired_status_id'] = 14;
-        $defaults['payment_plisio_canceled_status_id'] = 7;
-        $defaults['payment_plisio_sort_order'] = 1;
+        $defaults['plisio_receive_currencies'] = '';
+        $defaults['plisio_white_label'] = false;
+        $defaults['plisio_order_status_id'] = 1;
+        $defaults['plisio_pending_status_id'] = 1;
+        $defaults['plisio_confirming_status_id'] = 1;
+        $defaults['plisio_paid_status_id'] = 5;
+        $defaults['plisio_invalid_status_id'] = 10;
+        $defaults['plisio_changeback_status_id'] = 13;
+        $defaults['plisio_expired_status_id'] = 14;
+        $defaults['plisio_canceled_status_id'] = 7;
+        $defaults['plisio_canceled_sort_order'] = 1;
+        $defaults['plisio_sort_order'] = 1;
 
-        $this->model_setting_setting->editSetting('payment_plisio', $defaults);
+        $this->model_setting_setting->editSetting('plisio', $defaults);
     }
 
     public function uninstall()
