@@ -18,13 +18,4 @@ $_['entry_expired_status'] = 'Partially paid';
 $_['entry_canceled_status'] = 'Canceled Status';
 $_['entry_changeback_status'] = 'Overpayed';
 
-$_['help_total'] = 'The checkout total the order must reach before this payment method becomes active.';
-
-$_['error_permission'] = 'Warning: You do not have permission to modify Plisio!';
-$_['error_composer'] = 'Unable to load plisio library. Please download a compiled vendor folder or run composer.';
-
 $_['text_plisio'] = '<a href="https://plisio.net/" target="_blank" rel="noopener"><img src="view/image/payment/plisio.png" alt="Plisio" title="Plisio" /></a>';
-
-// Tab
-$_['tab_settings']				         = 'Settings';
-$_['tab_order_status']			         = 'Order Status';
