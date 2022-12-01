@@ -1,11 +1,11 @@
 <?php
 
-class ModelPaymentPlisio extends Model
+class ModelExtensionPaymentPlisio extends Model
 {
     public function install()
     {
         try {
-            $this->db->query("
+            $result = $this->db->query("
       CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "plisio_order` (
         `plisio_order_id` INT(11) NOT NULL AUTO_INCREMENT,
         `order_id` INT(11) NOT NULL,
@@ -42,6 +42,7 @@ class ModelPaymentPlisio extends Model
         $defaults['plisio_changeback_status_id'] = 13;
         $defaults['plisio_expired_status_id'] = 14;
         $defaults['plisio_canceled_status_id'] = 7;
+        $defaults['plisio_canceled_sort_order'] = 1;
         $defaults['plisio_sort_order'] = 1;
 
         $this->model_setting_setting->editSetting('plisio', $defaults);
