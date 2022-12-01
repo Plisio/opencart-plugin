@@ -16,39 +16,17 @@ class ControllerExtensionPaymentPlisio extends Controller
         $this->load->model('localisation/geo_zone');
 
         if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
-            $this->model_setting_setting->editSetting('plisio', $this->request->post);
+            $this->model_setting_setting->editSetting('payment_plisio', $this->request->post);
             $this->session->data['success'] = $this->language->get('text_success');
-            $this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true));
+            $this->response->redirect($this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment', true));
         }
 
-        $data['heading_title'] = $this->language->get('heading_title');
-        $data['entry_status'] = $this->language->get('entry_status');
-        $data['entry_api_secret_key'] = $this->language->get('entry_api_secret_key');
-        $data['entry_order_status'] = $this->language->get('entry_order_status');
-        $data['entry_pending_status'] = $this->language->get('entry_pending_status');
-        $data['entry_confirming_status'] = $this->language->get('entry_confirming_status');
-        $data['entry_paid_status'] = $this->language->get('entry_paid_status');
-        $data['entry_changeback_status'] = $this->language->get('entry_changeback_status');
-        $data['entry_expired_status'] = $this->language->get('entry_expired_status');
-        $data['entry_invalid_status'] = $this->language->get('entry_invalid_status');
-        $data['entry_canceled_status'] = $this->language->get('entry_canceled_status');
-        $data['text_enabled'] = $this->language->get('text_enabled');
-        $data['text_disabled'] = $this->language->get('text_disabled');
-        $data['button_save'] = $this->language->get('button_save');
-        $data['button_cancel'] = $this->language->get('button_cancel');
-        $data['tab_settings'] = $this->language->get('tab_settings');
-        $data['tab_order_status'] = $this->language->get('tab_order_status');
-        $data['entry_sort_order'] = $this->language->get('entry_sort_order');
-
-        $data['action'] = $this->url->link('extension/payment/plisio', 'token=' . $this->session->data['token'], true);
-        $data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true);
+        $data['action'] = $this->url->link('extension/payment/plisio', 'user_token=' . $this->session->data['user_token'], true);
+        $data['cancel'] = $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment', true);
         $data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
         $data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
-
-        if (isset($this->error) && !empty($this->error)) {
-            foreach ($this->error as $key => $message) {
-                $data['error_' . $key] = $message;
-            }
+        if (isset($this->error['warning'])) {
+            $data['error_warning'] = $this->error['warning'];
         } else {
             $data['error_warning'] = '';
         }
@@ -56,20 +34,21 @@ class ControllerExtensionPaymentPlisio extends Controller
         $data['breadcrumbs'] = array();
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_home'),
-            'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+            'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true)
         );
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_extension'),
-            'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true)
+            'href' => $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment', true)
         );
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('heading_title'),
-            'href' => $this->url->link('extension/payment/plisio', 'token=' . $this->session->data['token'], true)
+            'href' => $this->url->link('extension/payment/plisio', 'user_token=' . $this->session->data['user_token'], true)
         );
 
-        $fields = array('plisio_status', 'plisio_api_secret_key', 'plisio_order_status_id', 'plisio_pending_status_id', 'plisio_confirming_status_id', 'plisio_paid_status_id',
-            'plisio_invalid_status_id', 'plisio_expired_status_id', 'plisio_changeback_status_id',
-            'plisio_canceled_status_id', 'plisio_sort_order'
+        $fields = array('payment_plisio_status', 'payment_plisio_api_secret_key', 'payment_plisio_order_status_id', 'payment_plisio_pending_status_id', 'payment_plisio_confirming_status_id',
+            'payment_plisio_paid_status_id', 'payment_plisio_invalid_status_id', 'payment_plisio_expired_status_id',
+            'payment_plisio_changeback_status_id', 'payment_plisio_canceled_status_id', 'payment_plisio_white_label',
+            'payment_plisio_sort_order'
         );
 
         $data['white_label_options'] = [
