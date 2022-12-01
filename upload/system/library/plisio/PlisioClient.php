@@ -5,7 +5,6 @@ class PlisioClient
     protected $secretKey = '';
     public $apiEndPoint = 'https://plisio.net/api/v1';
 
-
     public function __construct($secretKey)
     {
         $this->secretKey = $secretKey;

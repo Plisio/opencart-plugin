@@ -1,5 +1,7 @@
 <?php if ($fail): ?>
-<div class="warning"> <?php echo $fail ?> </div>
+<div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> <?php echo $fail ?>
+    <button type="button" class="close" style="right: 0" data-dismiss="alert">&times;</button>
+</div>
 <?php endif; ?>
 <form action="<?php echo $action; ?>" method="post">
     <div class="form-group">
