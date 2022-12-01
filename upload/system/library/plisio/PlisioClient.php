@@ -25,14 +25,6 @@ class PlisioClient
         return $this->apiCall('shops');
     }
 
-    public function getCurrencies($source_currency = 'USD')
-    {
-        $currencies = $this->guestApiCall("currencies/$source_currency");
-        return array_filter($currencies['data'], function ($currency) {
-            return $currency['hidden'] == 0;
-        });
-    }
-
     public function createTransaction($req)
     {
         return $this->apiCall('invoices/new', $req);
@@ -90,7 +82,7 @@ class PlisioClient
             CURLOPT_HEADER => true,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'Accept: application/json'
+                'Accept: application/json',
             ],
         ];
     }
@@ -117,9 +109,11 @@ class PlisioClient
 
         try {
             $apiUrl = $this->getApiUrl($cmd . $queryString);
+
             $ch = curl_init();
             curl_setopt_array($ch, $this->getCurlOptions($apiUrl));
             $data = curl_exec($ch);
+
             if ($data !== FALSE) {
                 $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
                 $body = substr($data, $header_size);
