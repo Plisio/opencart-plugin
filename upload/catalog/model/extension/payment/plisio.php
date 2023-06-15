@@ -1,6 +1,6 @@
 <?php
 
-class ModelPaymentPlisio extends Model
+class ModelExtensionPaymentPlisio extends Model
 {
     protected function validateRequiredData($data, $extra = [])
     {
@@ -81,7 +81,7 @@ class ModelPaymentPlisio extends Model
 
     public function getMethod($address, $total)
     {
-        $this->load->language('payment/plisio');
+        $this->load->language('extension/payment/plisio');
 
         $method_data = array(
             'code' => 'plisio',
