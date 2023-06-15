@@ -2,13 +2,13 @@
 
 require_once(DIR_SYSTEM . 'library/plisio/PlisioClient.php');
 
-class ControllerPaymentPlisio extends Controller
+class ControllerExtensionPaymentPlisio extends Controller
 {
     private $error = array();
 
     public function index()
     {
-        $this->load->language('payment/plisio');
+        $this->load->language('extension/payment/plisio');
         $this->document->setTitle($this->language->get('heading_title'));
 
         $this->load->model('setting/setting');
@@ -18,7 +18,7 @@ class ControllerPaymentPlisio extends Controller
         if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
             $this->model_setting_setting->editSetting('plisio', $this->request->post);
             $this->session->data['success'] = $this->language->get('text_success');
-            $this->response->redirect($this->url->link('extension/payment', 'token=' . $this->session->data['token'] . '&type=payment', true));
+            $this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true));
         }
 
         $data['heading_title'] = $this->language->get('heading_title');
@@ -40,8 +40,8 @@ class ControllerPaymentPlisio extends Controller
         $data['tab_order_status'] = $this->language->get('tab_order_status');
         $data['entry_sort_order'] = $this->language->get('entry_sort_order');
 
-        $data['action'] = $this->url->link('payment/plisio', 'token=' . $this->session->data['token'], true);
-        $data['cancel'] = $this->url->link('extension/payment', 'token=' . $this->session->data['token'] . '&type=payment', true);
+        $data['action'] = $this->url->link('extension/payment/plisio', 'token=' . $this->session->data['token'], true);
+        $data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true);
         $data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
         $data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
 
@@ -60,11 +60,11 @@ class ControllerPaymentPlisio extends Controller
         );
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_extension'),
-            'href' => $this->url->link('extension/payment', 'token=' . $this->session->data['token'] . '&type=payment', true)
+            'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true)
         );
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('heading_title'),
-            'href' => $this->url->link('payment/plisio', 'token=' . $this->session->data['token'], true)
+            'href' => $this->url->link('extension/payment/plisio', 'token=' . $this->session->data['token'], true)
         );
 
         $fields = array('plisio_status', 'plisio_api_secret_key', 'plisio_order_status_id', 'plisio_pending_status_id', 'plisio_confirming_status_id', 'plisio_paid_status_id',
@@ -89,12 +89,12 @@ class ControllerPaymentPlisio extends Controller
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
 
-        $this->response->setOutput($this->load->view('payment/plisio.tpl', $data));
+        $this->response->setOutput($this->load->view('extension/payment/plisio', $data));
     }
 
     protected function validate()
     {
-        if (!$this->user->hasPermission('modify', 'payment/plisio')) {
+        if (!$this->user->hasPermission('modify', 'extension/payment/plisio')) {
             $this->error['warning'] = $this->language->get('error_permission');
         }
 
@@ -108,15 +108,15 @@ class ControllerPaymentPlisio extends Controller
 
     public function install()
     {
-        $this->load->model('payment/plisio');
+        $this->load->model('extension/payment/plisio');
 
-        $this->model_payment_plisio->install();
+        $this->model_extension_payment_plisio->install();
     }
 
     public function uninstall()
     {
-        $this->load->model('payment/plisio');
+        $this->load->model('extension/payment/plisio');
 
-        $this->model_payment_plisio->uninstall();
+        $this->model_extension_payment_plisio->uninstall();
     }
 }

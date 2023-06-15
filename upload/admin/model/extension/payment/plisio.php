@@ -1,6 +1,6 @@
 <?php
 
-class ModelPaymentPlisio extends Model
+class ModelExtensionPaymentPlisio extends Model
 {
     public function install()
     {
