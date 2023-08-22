@@ -1,0 +1,178 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <button type="submit" form="form-payment" data-bs-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa-solid fa-save"></i></button>
+        <a href="{{ back }}" data-bs-toggle="tooltip" title="{{ button_back }}" class="btn btn-light"><i class="fa-solid fa-reply"></i></a></div>
+      <h1>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header"><i class="fa-solid fa-pencil"></i> {{ text_edit }}</div>
+
+      <div class="card-body">
+        <form id="form-payment" action="{{ save }}" method="post" data-oc-toggle="ajax">
+          
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-status">{{ entry_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_plisio_status" id="input-status" class="form-control">
+                {% if payment_plisio_status %}
+                  <option value="1" selected="selected">{{ text_enabled }}</option>
+                  <option value="0">{{ text_disabled }}</option>
+                {% else %}
+                  <option value="1">{{ text_enabled }}</option>
+                  <option value="0" selected="selected">{{ text_disabled }}</option>
+                {% endif %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-api-secret-key">{{ entry_api_secret_key }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="payment_plisio_api_secret_key" value="{{ payment_plisio_api_secret_key }}" placeholder="{{ entry_api_secret_key }}" id="input-api-secret-key" class="form-control" />
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-sort-order">{{ entry_sort_order }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="payment_plisio_sort_order" value="{{ payment_plisio_sort_order }}" placeholder="{{ entry_plisio_sort_order }}" id="input-sort-order" class="form-control" />
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-order-status">{{ entry_order_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_plisio_order_status_id" id="input-order-status" class="form-control">
+                {% for order_status in order_statuses %}
+                {% if order_status.order_status_id == payment_plisio_order_status_id %}
+                <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+                {% else %}
+                <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-pending-status">{{ entry_pending_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_plisio_pending_status_id" id="input-pending-status" class="form-control">
+                {% for order_status in order_statuses %}
+                {% if order_status.order_status_id == payment_plisio_pending_status_id %}
+                <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+                {% else %}
+                <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-confirming-status">{{ entry_confirming_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_plisio_confirming_status_id" id="input-pending-status" class="form-control">
+                {% for order_status in order_statuses %}
+                {% if order_status.order_status_id == payment_plisio_confirming_status_id %}
+                <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+                {% else %}
+                <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-paid-status">{{ entry_paid_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_plisio_paid_status_id" id="input-paid-status" class="form-control">
+                {% for order_status in order_statuses %}
+                {% if order_status.order_status_id == payment_plisio_paid_status_id %}
+                <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+                {% else %}
+                <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-changeback-status">{{ entry_changeback_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_plisio_changeback_status_id" id="input-changeback-status" class="form-control">
+                {% for order_status in order_statuses %}
+                  {% if order_status.order_status_id == payment_plisio_changeback_status_id %}
+                    <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+                  {% else %}
+                    <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-expired-status">{{ entry_expired_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_plisio_expired_status_id" id="input-expired-status" class="form-control">
+                {% for order_status in order_statuses %}
+                  {% if order_status.order_status_id == payment_plisio_expired_status_id %}
+                    <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+                  {% else %}
+                    <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-invalid-status">{{ entry_invalid_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_plisio_invalid_status_id" id="input-invalid-status" class="form-control">
+                {% for order_status in order_statuses %}
+                {% if order_status.order_status_id == payment_plisio_invalid_status_id %}
+                <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+                {% else %}
+                <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-canceled-status">{{ entry_canceled_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_plisio_canceled_status_id" id="input-canceled-status" class="form-control">
+                {% for order_status in order_statuses %}
+                  {% if order_status.order_status_id == payment_plisio_canceled_status_id %}
+                    <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+                  {% else %}
+                    <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{ footer }}

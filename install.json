@@ -1,0 +1,8 @@
+{
+    "name": "Plisio Payment Gateway",
+    "code": "plisio",
+    "license": "GPL",
+    "version": "4.0.0",
+    "author": "Plisio",
+    "link": "https://plisio.net/"
+}
