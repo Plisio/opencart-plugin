@@ -4,7 +4,7 @@ namespace Opencart\System\Library\Extension\Plisio;
 class Plisioclient
 {
     protected $secretKey = '';
-    public $apiEndPoint = 'https://plisio.net/api/v1';
+    public $apiEndPoint = 'https://api.plisio.net/api/v1';
 
     public function __construct($secretKey)
     {
