@@ -7,7 +7,7 @@ use Opencart\System\Engine\Controller;
 
 class Plisio extends Controller
 {
-    private array $error = [];
+    private $error = [];
 
     public function index(): void
     {
