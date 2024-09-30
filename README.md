@@ -12,7 +12,7 @@ Sign up for Plisio account at <https://plisio.net>
 
 ### For OpenCart 4.* version
 
-1. Download <https://github.com/Plisio/opencart-plugin/releases/download/v4.0.0/plisio.ocmod.zip>
+1. Download <https://github.com/Plisio/opencart-plugin/releases/download/v4.0.1/plisio.ocmod.zip>
 2. Go to Extensions » Installer and upload plisio.ocmod.zip
 3. Go to Extensions » Extensions and from dropdown choose Payments.
 4. Find Plisio and click Install button.
@@ -22,7 +22,7 @@ Sign up for Plisio account at <https://plisio.net>
 
 ### For OpenCart 3.* version
 
-1. Download <https://github.com/Plisio/opencart-plugin/releases/download/v3.2.0/plisio.ocmod.zip>
+1. Download <https://github.com/Plisio/opencart-plugin/releases/download/v3.2.1/plisio.ocmod.zip>
 2. Go to Extensions » Installer and upload opencart3.ocmod.zip
 3. Go to Extensions » Extensions and from dropdown choose Payments.
 4. Find Plisio and click Install button.
