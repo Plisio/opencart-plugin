@@ -77,6 +77,7 @@ class ControllerExtensionPaymentPlisio extends Controller
             if (isset($shop['data']['white_label']) && $shop['data']['white_label']) {
                 $this->response->redirect($this->url->link('extension/payment/plisio/invoice', '', true));
             } else {
+				unset($this->session->data['order_id']);
                 $this->response->redirect($response['data']['invoice_url']);
             }
         } else {
