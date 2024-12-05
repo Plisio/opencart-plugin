@@ -9,7 +9,7 @@ class Plisio extends Controller
     private $plisio;
     private $secretKey;
 
-    const PLISIO_OPENCART_EXTENSION_VERSION = '4.0.0';
+    const PLISIO_OPENCART_EXTENSION_VERSION = '4.0.2';
 
     public function index()
     {
@@ -79,6 +79,7 @@ class Plisio extends Controller
             if (isset($shop['data']['white_label']) && $shop['data']['white_label']) {
                 $this->response->redirect($this->url->link('extension/plisio/payment/plisio.invoice', ''));
             } else {
+				unset($this->session->data['order_id']);
                 $this->response->redirect($response['data']['invoice_url']);
             }
         } else {
